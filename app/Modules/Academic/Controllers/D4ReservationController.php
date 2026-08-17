@@ -102,6 +102,8 @@ class D4ReservationController
 
     private function hospitalAccess(Request $request, int $hospitalId): void
     {
-        abort_unless(app(InstitutionAccess::class)->has($request->user(), $hospitalId, [InstitutionRole::Admin->value, InstitutionRole::HospitalManager->value]), 403);
+        $access = app(InstitutionAccess::class);
+        abort_if($access->isSuperAdmin($request->user()), 403);
+        abort_unless($access->has($request->user(), $hospitalId, [InstitutionRole::Admin->value, InstitutionRole::HospitalManager->value]), 403);
     }
 }
