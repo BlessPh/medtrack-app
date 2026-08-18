@@ -22,6 +22,8 @@ class DatabaseSchemaTest extends TestCase
             'evaluation_templates', 'evaluations', 'evaluation_disputes', 'academic_decisions',
             'financial_obligations', 'financial_obligation_items', 'payment_transactions', 'payment_allocations', 'payment_refunds',
             'documents', 'notifications',
+            // Infrastructure Laravel nécessaire à QUEUE_CONNECTION=database.
+            'jobs', 'job_batches', 'failed_jobs',
         ];
 
         foreach ($tables as $table) {
@@ -30,6 +32,5 @@ class DatabaseSchemaTest extends TestCase
 
         $this->assertFalse(Schema::hasTable('outbox_messages'));
         $this->assertFalse(Schema::hasTable('media_versions'));
-        $this->assertFalse(Schema::hasTable('jobs'));
     }
 }

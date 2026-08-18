@@ -131,7 +131,7 @@ class OpenApiGenerator
         $parameters = [];
         preg_match_all('/\{([^}]+)\}/', $path, $matches);
         foreach ($matches[1] as $name) {
-            $publicId = in_array($name, ['institution', 'student', 'user', 'application', 'internship', 'evaluation', 'document', 'transaction', 'media', 'invitation', 'institutionAccountRequest'], true);
+            $publicId = in_array($name, ['institution', 'student', 'user', 'application', 'internship', 'evaluation', 'document', 'transaction', 'media', 'invitation', 'institutionAccountRequest', 'campaign', 'campaignHospital'], true);
             if (in_array($name, ['token', 'hash', 'resource'], true)) {
                 $parameters[] = ['name' => $name, 'in' => 'path', 'required' => true, 'description' => 'Valeur textuelle.', 'schema' => ['type' => 'string']];
                 continue;
@@ -260,10 +260,10 @@ class OpenApiGenerator
             'POST /api/v1/academic/campaigns/{campaign}/reserve' => ['hospital_id' => 'uuid'],
             'POST /api/v1/academic/student-imports/preview' => ['university_id' => 'uuid', 'promotion_id' => 'integer', 'academic_year_id' => 'integer', 'file' => 'file'],
             'POST /api/v1/academic/student-imports/confirm' => ['university_id' => 'uuid', 'promotion_id' => 'integer', 'academic_year_id' => 'integer', 'students' => 'array:ImportedStudent'],
-            'POST /api/v1/admissions/applications' => ['campaign_id' => 'integer', 'preferred_hospital_id' => '?uuid', 'motivation' => '?string'],
+            'POST /api/v1/admissions/applications' => ['campaign_id' => 'uuid', 'preferred_hospital_id' => '?uuid', 'motivation' => '?string'],
             'PATCH /api/v1/admissions/applications/{application}/reject' => ['review_note' => 'string'],
             'POST /api/v1/admissions/applications/{application}/accept' => ['capacity_pool_id' => 'integer'],
-            'POST /api/v1/admissions/capacities' => ['campaign_hospital_id' => 'integer', 'level_id' => '?integer', 'total_places' => 'integer'],
+            'POST /api/v1/admissions/capacities' => ['campaign_hospital_id' => 'uuid', 'level_id' => '?integer', 'total_places' => 'integer'],
             'POST /api/v1/internships/templates' => ['name' => 'string', 'steps' => 'array:PathStepInput'],
             'POST /api/v1/internships' => ['admission_id' => 'uuid', 'path_template_id' => '?integer', 'supervisor_id' => '?uuid', 'starts_on' => 'date'],
             'POST /api/v1/internships/{internship}/rotations' => ['path_step_id' => '?integer', 'institution_unit_id' => '?integer', 'starts_on' => 'date', 'ends_on' => 'date'],
@@ -286,9 +286,9 @@ class OpenApiGenerator
             'POST /api/v1/finance/callbacks/maishapay' => ['reference' => 'string', 'status' => 'enum:PAID|FAILED', 'obligation_id' => '?uuid', 'amount' => '?number'],
             'POST /api/v1/finance/transactions/{transaction}/refunds' => ['amount' => 'number', 'reason' => 'string'],
             'POST /api/v1/documents' => ['owner_type' => 'enum:student|internship', 'owner_id' => 'uuid', 'collection' => 'enum:identity|proof|evaluation', 'file' => 'file'],
-            'POST /api/v1/campaign-media/campaigns/{campaign}/common-letter' => ['file' => 'file'],
-            'POST /api/v1/campaign-media/campaigns/{campaign}/documents' => ['file' => 'file'],
-            'POST /api/v1/campaign-media/campaigns/{campaign}/hospitals/{campaignHospital}/letter' => ['file' => 'file'],
+            'POST /api/v1/campaign-media/campaigns/{campaign}/common-letter' => ['file' => 'file', 'display_name' => 'string'],
+            'POST /api/v1/campaign-media/campaigns/{campaign}/documents' => ['file' => 'file', 'display_name' => 'string'],
+            'POST /api/v1/campaign-media/campaigns/{campaign}/hospitals/{campaignHospital}/letter' => ['file' => 'file', 'display_name' => 'string'],
         ];
     }
 

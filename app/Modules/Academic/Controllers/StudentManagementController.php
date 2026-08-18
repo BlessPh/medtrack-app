@@ -57,7 +57,7 @@ class StudentManagementController
         $campaigns = Campaign::query()->where('university_id', $student->university_id)
             ->whereHas('promotions', fn ($query) => $query->whereKey($activePromotionId ?? 0))
             ->with(['academicYear', 'hospitals.hospital'])->orderByDesc('starts_at')->get()
-            ->map(fn (Campaign $campaign) => ['id' => $campaign->id, 'name' => $campaign->name, 'status' => $campaign->status, 'starts_at' => $campaign->starts_at, 'ends_at' => $campaign->ends_at, 'academic_year' => $campaign->academicYear?->label, 'applied' => DB::table('applications')->where('campaign_id', $campaign->id)->where('student_id', $student->id)->exists()]);
+            ->map(fn (Campaign $campaign) => ['id' => $campaign->public_id, 'name' => $campaign->name, 'status' => $campaign->status, 'starts_at' => $campaign->starts_at, 'ends_at' => $campaign->ends_at, 'academic_year' => $campaign->academicYear?->label, 'applied' => DB::table('applications')->where('campaign_id', $campaign->id)->where('student_id', $student->id)->exists()]);
         $internships = DB::table('internships')->join('institutions', 'institutions.id', '=', 'internships.hospital_id')->where('internships.student_id', $student->id)
             ->leftJoin('academic_decisions', 'academic_decisions.internship_id', '=', 'internships.id')
             ->select(['internships.public_id as id', 'institutions.name as hospital', 'internships.starts_on', 'internships.ends_on', 'internships.status', 'academic_decisions.decision', 'academic_decisions.final_score'])->orderByDesc('internships.starts_on')->get();

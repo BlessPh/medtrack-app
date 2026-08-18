@@ -71,7 +71,7 @@ class D4ReservationController
         });
         $university = $campaignHospital->campaign->university;
 
-        Notification::send($university->members()->get(), new InstitutionNotification($university->public_id, $university->name, 'Réponse à une demande D4', $campaignHospital->hospital->name.' a répondu à la demande de réservation.', 'CAMPAIGN_REQUEST', 'INFO', '/university/campaigns/'.$campaignHospital->campaign_id));
+        Notification::send($university->members()->get(), new InstitutionNotification($university->public_id, $university->name, 'Réponse à une demande D4', $campaignHospital->hospital->name.' a répondu à la demande de réservation.', 'CAMPAIGN_REQUEST', 'INFO', '/university/campaigns/'.$campaignHospital->campaign->public_id));
 
         return response()->json(['data' => $campaignHospital->fresh()->load(['hospital', 'capacityPools'])]);
     }
@@ -126,10 +126,10 @@ class D4ReservationController
                 'hospital_id' => 'Cet hôpital ne dispose plus de place.']);
             
             $values = [
-                'campaign_id' => $campaign->id, 
+                'campaign_id' => $campaign->id,
                 'student_id' => $student->id, 
                 'preferred_hospital_id' => $hospitalId, 
-                'status' => 'RESERVED', 
+                'status' => 'RESERVED',
                 'submitted_at' => now(), 
                 'reviewed_at' => null, 
                 'reviewed_by' => null, 
@@ -141,11 +141,10 @@ class D4ReservationController
             $pool->increment('reserved_places');
             
             CapacityReservation::updateOrCreate([
-                'application_id' => $application->id
-            ], 
-            ['
-                capacity_pool_id' => $pool->id, 
-                'status' => 'HELD', 
+                'application_id' => $application->id,
+            ], [
+                'capacity_pool_id' => $pool->id,
+                'status' => 'HELD',
                 'expires_at' => null
             ]);
             
@@ -176,7 +175,9 @@ class D4ReservationController
 
         }, 3);
 
-        return response()->json(['data' => $application->fresh()]);
+        return response()->json([
+            'data' => $application->fresh()
+        ]);
     }
 
     private function hospitalAccess(Request $request, int $hospitalId): void

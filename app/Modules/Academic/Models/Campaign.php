@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Modules\Media\Models\Media;
+use App\Shared\Models\HasPublicId;
 
 class Campaign extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -38,5 +41,14 @@ class Campaign extends Model
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function toArray(): array
+    {
+        $data = parent::toArray();
+        $data['id'] = $this->public_id;
+        unset($data['public_id']);
+
+        return $data;
     }
 }

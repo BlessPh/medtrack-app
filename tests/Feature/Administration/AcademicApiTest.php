@@ -101,7 +101,7 @@ class AcademicApiTest extends TestCase
         $campaign = Campaign::create(['university_id' => $university->id, 'academic_year_reference_id' => $year->id, 'academic_year_id' => null, 'name' => 'Stage', 'starts_at' => now()->subDay(), 'ends_at' => now()->addDay(), 'status' => 'OPEN']);
         $campaign->promotions()->attach($promotion);
 
-        $this->actingAs($manager)->getJson("/api/v1/academic/campaigns/{$campaign->id}/students/{$student->public_id}/eligibility")->assertOk()->assertJsonPath('data.eligible', true);
+        $this->actingAs($manager)->getJson("/api/v1/academic/campaigns/{$campaign->public_id}/students/{$student->public_id}/eligibility")->assertOk()->assertJsonPath('data.eligible', true);
     }
 
     public function test_manager_cannot_enroll_student_in_another_university_promotion(): void

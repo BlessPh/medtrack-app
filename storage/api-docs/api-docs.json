@@ -112,9 +112,10 @@
                         "name": "campaignHospital",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -401,9 +402,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -444,9 +446,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -559,9 +562,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -626,9 +630,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -697,9 +702,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -742,9 +748,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     },
                     {
@@ -2553,7 +2560,8 @@
                                 "type": "object",
                                 "properties": {
                                     "campaign_id": {
-                                        "type": "integer"
+                                        "type": "string",
+                                        "format": "uuid"
                                     },
                                     "preferred_hospital_id": {
                                         "type": "string",
@@ -2797,7 +2805,8 @@
                                 "type": "object",
                                 "properties": {
                                     "campaign_hospital_id": {
-                                        "type": "integer"
+                                        "type": "string",
+                                        "format": "uuid"
                                     },
                                     "level_id": {
                                         "type": "integer"
@@ -4607,9 +4616,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -4651,10 +4661,15 @@
                                     "file": {
                                         "type": "string",
                                         "format": "binary"
+                                    },
+                                    "display_name": {
+                                        "type": "string",
+                                        "example": null
                                     }
                                 },
                                 "required": [
-                                    "file"
+                                    "file",
+                                    "display_name"
                                 ]
                             }
                         }
@@ -4674,9 +4689,10 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -4718,10 +4734,15 @@
                                     "file": {
                                         "type": "string",
                                         "format": "binary"
+                                    },
+                                    "display_name": {
+                                        "type": "string",
+                                        "example": null
                                     }
                                 },
                                 "required": [
-                                    "file"
+                                    "file",
+                                    "display_name"
                                 ]
                             }
                         }
@@ -4741,18 +4762,20 @@
                         "name": "campaign",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     },
                     {
                         "name": "campaignHospital",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Identifiant public UUID.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -4794,10 +4817,15 @@
                                     "file": {
                                         "type": "string",
                                         "format": "binary"
+                                    },
+                                    "display_name": {
+                                        "type": "string",
+                                        "example": null
                                     }
                                 },
                                 "required": [
-                                    "file"
+                                    "file",
+                                    "display_name"
                                 ]
                             }
                         }

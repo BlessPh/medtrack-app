@@ -19,9 +19,9 @@ class AdmissionController
 {
     public function store(Request $request, EligibilityService $eligibility): JsonResponse
     {
-        $data = $request->validate(['campaign_id' => ['required', 'integer', 'exists:campaigns,id'], 'preferred_hospital_id' => ['nullable', 'uuid', 'exists:institutions,public_id'], 'motivation' => ['nullable', 'string', 'max:3000']]);
+        $data = $request->validate(['campaign_id' => ['required', 'uuid', 'exists:campaigns,public_id'], 'preferred_hospital_id' => ['nullable', 'uuid', 'exists:institutions,public_id'], 'motivation' => ['nullable', 'string', 'max:3000']]);
         $student = Student::where('user_id', $request->user()->id)->firstOrFail();
-        $campaign = Campaign::findOrFail($data['campaign_id']);
+        $campaign = Campaign::where('public_id', $data['campaign_id'])->firstOrFail();
         abort_unless($eligibility->isEligible($student, $campaign), 422, 'Étudiant non éligible à cette campagne.');
         $hospitalId = isset($data['preferred_hospital_id']) ? Institution::where('public_id', $data['preferred_hospital_id'])->value('id') : null;
         if ($hospitalId) {
@@ -67,8 +67,8 @@ class AdmissionController
 
     public function storeCapacity(Request $request): JsonResponse
     {
-        $data = $request->validate(['campaign_hospital_id' => ['required', 'integer', 'exists:campaign_hospitals,id'], 'level_id' => ['nullable', 'integer', 'exists:academic_levels,id'], 'total_places' => ['required', 'integer', 'min:1']]);
-        $hospital = CampaignHospital::findOrFail($data['campaign_hospital_id']);
+        $data = $request->validate(['campaign_hospital_id' => ['required', 'uuid', 'exists:campaign_hospitals,public_id'], 'level_id' => ['nullable', 'integer', 'exists:academic_levels,id'], 'total_places' => ['required', 'integer', 'min:1']]);
+        $hospital = CampaignHospital::where('public_id', $data['campaign_hospital_id'])->firstOrFail();
         abort_unless(app(InstitutionAccess::class)->has($request->user(), $hospital->hospital_id, [InstitutionRole::HospitalManager->value]), 403);
 
         return response()->json(['data' => CapacityPool::updateOrCreate(['campaign_hospital_id' => $hospital->id, 'level_id' => $data['level_id'] ?? null], ['total_places' => $data['total_places']])], 201);

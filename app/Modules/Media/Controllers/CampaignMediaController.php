@@ -19,19 +19,19 @@ class CampaignMediaController
     public function storeDocument(Request $request, Campaign $campaign): JsonResponse
     {
         abort_unless($campaign->status === 'DRAFT' && app(AcademicPolicy::class)->manage($request->user(), $campaign->university_id), 403);
-        return $this->store($request, $campaign, 'CAMPAIGN_DOCUMENT', 'campaigns/'.$campaign->id.'/documents');
+        return $this->store($request, $campaign, 'CAMPAIGN_DOCUMENT', 'campaigns/'.$campaign->public_id.'/documents');
     }
 
     public function storeCommonLetter(Request $request, Campaign $campaign): JsonResponse
     {
         abort_unless($campaign->strategy === 'D4_RESERVATION' && $campaign->status === 'DRAFT' && app(AcademicPolicy::class)->manage($request->user(), $campaign->university_id), 403);
-        return $this->store($request, $campaign, 'D4_COMMON_LETTER', 'campaigns/'.$campaign->id.'/letters/common');
+        return $this->store($request, $campaign, 'D4_COMMON_LETTER', 'campaigns/'.$campaign->public_id.'/letters/common');
     }
 
     public function storeHospitalLetter(Request $request, Campaign $campaign, CampaignHospital $campaignHospital): JsonResponse
     {
         abort_unless($campaignHospital->campaign_id === $campaign->id && $campaign->strategy === 'D4_RESERVATION' && $campaign->status === 'DRAFT' && app(AcademicPolicy::class)->manage($request->user(), $campaign->university_id), 403);
-        return $this->store($request, $campaignHospital, 'D4_HOSPITAL_LETTER', 'campaigns/'.$campaign->id.'/letters/hospitals/'.$campaignHospital->hospital_id);
+        return $this->store($request, $campaignHospital, 'D4_HOSPITAL_LETTER', 'campaigns/'.$campaign->public_id.'/letters/hospitals/'.$campaignHospital->public_id);
     }
 
     public function download(Request $request, Media $media, EligibilityService $eligibility): StreamedResponse
@@ -63,11 +63,11 @@ class CampaignMediaController
 
     private function store(Request $request, object $owner, string $collection, string $base): JsonResponse
     {
-        $data = $request->validate(['file' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:10240']]);
+        $data = $request->validate(['file' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:10240'], 'display_name' => ['required', 'string', 'max:200']]);
         $file = $data['file']; $extension = strtolower($file->guessExtension() ?: 'bin');
         $path = $file->storeAs($base.'/'.now()->format('Y/m'), Str::uuid().'.'.$extension, 'local');
         abort_unless($path, 500, 'Le document n’a pas pu être stocké.');
-        $media = $owner->media()->create(['collection' => $collection, 'disk' => 'local', 'path' => $path, 'original_name' => $file->getClientOriginalName(), 'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(), 'checksum' => hash_file('sha256', $file->getRealPath()), 'uploaded_by' => $request->user()->id]);
+        $media = $owner->media()->create(['collection' => $collection, 'disk' => 'local', 'path' => $path, 'original_name' => $file->getClientOriginalName(), 'display_name' => trim($data['display_name']), 'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size' => $file->getSize(), 'checksum' => hash_file('sha256', $file->getRealPath()), 'uploaded_by' => $request->user()->id]);
         return response()->json(['data' => $media, 'message' => 'Document ajouté.'], 201);
     }
 }

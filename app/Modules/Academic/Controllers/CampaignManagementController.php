@@ -113,10 +113,10 @@ class CampaignManagementController
     {
         $university = Institution::findOrFail($campaign->university_id);
         $users = Student::query()->whereNotNull('user_id')->whereHas('enrollments', fn ($query) => $query->where('status', 'ACTIVE')->whereIn('promotion_id', $campaign->promotions->pluck('id')))->with('user')->get()->pluck('user')->filter();
-        Notification::send($users, new InstitutionNotification($university->public_id, $university->name, 'Nouvelle campagne de stage', $campaign->name.' est désormais ouverte.', 'CAMPAIGN', 'INFO', '/student/campaigns/'.$campaign->id));
+        Notification::send($users, new InstitutionNotification($university->public_id, $university->name, 'Nouvelle campagne de stage', $campaign->name.' est désormais ouverte.', 'CAMPAIGN', 'INFO', '/student/campaigns/'.$campaign->public_id));
         if ($campaign->strategy === 'D4_RESERVATION') foreach ($campaign->hospitals as $request) {
             $request->update(['requested_at' => now()]);
-            Notification::send($request->hospital->members()->get(), new InstitutionNotification($request->hospital->public_id, $request->hospital->name, 'Demande de réservation D4', $university->name.' souhaite réserver des places de stage de fin de cycle.', 'CAMPAIGN_REQUEST', 'INFO', '/hospital/campaign-requests/'.$request->id));
+            Notification::send($request->hospital->members()->get(), new InstitutionNotification($request->hospital->public_id, $request->hospital->name, 'Demande de réservation D4', $university->name.' souhaite réserver des places de stage de fin de cycle.', 'CAMPAIGN_REQUEST', 'INFO', '/hospital/campaign-requests/'.$request->public_id));
         }
     }
 }
