@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: pdo_sqlite
           coverage: none
       - run: composer install --no-interaction --prefer-dist
@@ -20,7 +20,7 @@ jobs:
       - run: php artisan test
         env:
           DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
+          DB_DATABASE: ":memory:"
 
   mysql:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
         env:
           MYSQL_DATABASE: medtrack_test
           MYSQL_ROOT_PASSWORD: password
-        ports: ['3306:3306']
+        ports: ["3306:3306"]
         options: >-
           --health-cmd="mysqladmin ping -h localhost -ppassword"
           --health-interval=10s --health-timeout=5s --health-retries=10
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: pdo_mysql
           coverage: none
       - run: composer install --no-interaction --prefer-dist
@@ -59,7 +59,7 @@ jobs:
         env:
           MARIADB_DATABASE: medtrack_test
           MARIADB_ROOT_PASSWORD: password
-        ports: ['3306:3306']
+        ports: ["3306:3306"]
         options: >-
           --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=10s --health-timeout=5s --health-retries=10
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: pdo_mysql
           coverage: none
       - run: composer install --no-interaction --prefer-dist
@@ -89,7 +89,7 @@ jobs:
           POSTGRES_DB: medtrack_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-        ports: ['5432:5432']
+        ports: ["5432:5432"]
         options: >-
           --health-cmd="pg_isready -U postgres"
           --health-interval=10s --health-timeout=5s --health-retries=10
@@ -97,7 +97,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: pdo_pgsql
           coverage: none
       - run: composer install --no-interaction --prefer-dist
@@ -118,7 +118,7 @@ jobs:
         env:
           ACCEPT_EULA: Y
           MSSQL_SA_PASSWORD: Your_password123
-        ports: ['1433:1433']
+        ports: ["1433:1433"]
         options: >-
           --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Your_password123 -C -Q 'SELECT 1'"
           --health-interval=15s --health-timeout=10s --health-retries=20
@@ -126,7 +126,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: pdo_sqlsrv
           coverage: none
       - run: composer install --no-interaction --prefer-dist

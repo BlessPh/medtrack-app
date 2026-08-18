@@ -46,7 +46,7 @@ class ReportingSecurityQualityTest extends TestCase
 
     public function test_all_non_public_api_routes_require_authentication(): void
     {
-        $allowed = ['health', 'auth/login', 'auth/password/forgot', 'auth/password/reset', 'auth/student-registration/check', 'auth/student-registration', 'auth/institution-registration', 'auth/member-invitations/{token}', 'auth/member-invitations/{token}/register', 'finance/callbacks/maishapay'];
+        $allowed = ['health', 'auth/login', 'auth/password/forgot', 'auth/password/reset', 'auth/student-registration/check', 'auth/student-registration', 'auth/student-registration/universities', 'auth/student-registration/current-academic-year', 'auth/institution-registration', 'auth/member-invitations/{token}', 'auth/member-invitations/{token}/register', 'finance/callbacks/maishapay'];
         foreach (Route::getRoutes() as $route) {
             if (! str_starts_with($route->uri(), 'api/v1/') || in_array('GET', $route->methods()) && str_ends_with($route->uri(), '/health')) {
                 continue;

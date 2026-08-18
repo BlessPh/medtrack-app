@@ -58,6 +58,174 @@
         }
     ],
     "paths": {
+        "/api/v1/academic/campaign-requests": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/campaign requests",
+                "operationId": "getAcademicCampaignRequests",
+                "parameters": [
+                    {
+                        "name": "hospital_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/campaign-requests/{campaignHospital}/respond": {
+            "patch": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Mettre à jour academic/campaign requests/campaignHospital/respond",
+                "operationId": "patchAcademicCampaignRequestsCampaignHospitalRespond",
+                "parameters": [
+                    {
+                        "name": "campaignHospital",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "decision": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACCEPTED",
+                                            "DECLINED"
+                                        ]
+                                    },
+                                    "capacity": {
+                                        "type": "integer"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "decision"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/campaign-reservations/{application}/cancel": {
+            "patch": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Mettre à jour academic/campaign reservations/application/cancel",
+                "operationId": "patchAcademicCampaignReservationsApplicationCancel",
+                "parameters": [
+                    {
+                        "name": "application",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/academic/campaigns": {
             "get": {
                 "tags": [
@@ -65,6 +233,39 @@
                 ],
                 "summary": "Consulter academic/campaigns",
                 "operationId": "getAcademicCampaigns",
+                "parameters": [
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "DRAFT",
+                                "OPEN",
+                                "CLOSED",
+                                "CANCELLED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "academic_year_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/Success"
@@ -104,6 +305,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -138,6 +342,17 @@
                                         "type": "string",
                                         "example": null
                                     },
+                                    "strategy": {
+                                        "type": "string",
+                                        "enum": [
+                                            "STANDARD",
+                                            "D4_RESERVATION"
+                                        ]
+                                    },
+                                    "instructions": {
+                                        "type": "string",
+                                        "example": null
+                                    },
                                     "starts_at": {
                                         "type": "string",
                                         "format": "date-time"
@@ -151,15 +366,247 @@
                                         "items": {
                                             "$ref": "#/components/schemas/IntegerListItem"
                                         }
+                                    },
+                                    "hospital_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/UuidListItem"
+                                        }
                                     }
                                 },
                                 "required": [
                                     "university_id",
                                     "academic_year_id",
                                     "name",
+                                    "strategy",
                                     "starts_at",
                                     "ends_at",
                                     "promotion_ids"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/campaigns/{campaign}": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/campaigns/campaign",
+                "operationId": "getAcademicCampaignsCampaign",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Remplacer academic/campaigns/campaign",
+                "operationId": "putAcademicCampaignsCampaign",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "university_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "academic_year_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "regime": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "strategy": {
+                                        "type": "string",
+                                        "enum": [
+                                            "STANDARD",
+                                            "D4_RESERVATION"
+                                        ]
+                                    },
+                                    "instructions": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "promotion_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/IntegerListItem"
+                                        }
+                                    },
+                                    "hospital_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/UuidListItem"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "university_id",
+                                    "academic_year_id",
+                                    "name",
+                                    "strategy",
+                                    "starts_at",
+                                    "ends_at",
+                                    "promotion_ids"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/campaigns/{campaign}/reserve": {
+            "post": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Créer ou déclencher academic/campaigns/campaign/reserve",
+                "operationId": "postAcademicCampaignsCampaignReserve",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "hospital_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "required": [
+                                    "hospital_id"
                                 ]
                             }
                         }
@@ -194,6 +641,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -230,6 +683,51 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/academic/campaigns/{campaign}/student-view": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/campaigns/campaign/student view",
+                "operationId": "getAcademicCampaignsCampaignStudentView",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/academic/campaigns/{campaign}/students/{student}/eligibility": {
@@ -270,6 +768,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -291,6 +792,90 @@
                 ],
                 "summary": "Consulter academic/current context",
                 "operationId": "getAcademicCurrentContext",
+                "parameters": [
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/dashboard": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/dashboard",
+                "operationId": "getAcademicDashboard",
+                "parameters": [
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/departments": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/departments",
+                "operationId": "getAcademicDepartments",
                 "parameters": [
                     {
                         "name": "university_id",
@@ -387,6 +972,18 @@
                             "type": "string",
                             "format": "uuid"
                         }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "INACTIVE"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -428,6 +1025,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -450,6 +1050,9 @@
                                     "university_id": {
                                         "type": "string",
                                         "format": "uuid"
+                                    },
+                                    "faculty_unit_id": {
+                                        "type": "integer"
                                     },
                                     "code": {
                                         "type": "string",
@@ -476,6 +1079,141 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/academic/programs/{program}": {
+            "put": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Remplacer academic/programs/program",
+                "operationId": "putAcademicProgramsProgram",
+                "parameters": [
+                    {
+                        "name": "program",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "faculty_unit_id": {
+                                        "type": "integer"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "degree_type": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "duration_years": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "INACTIVE"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "code",
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Supprimer academic/programs/program",
+                "operationId": "deleteAcademicProgramsProgram",
+                "parameters": [
+                    {
+                        "name": "program",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "$ref": "#/components/responses/NoContent"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/academic/promotions": {
@@ -551,6 +1289,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -596,6 +1337,216 @@
                 }
             }
         },
+        "/api/v1/academic/promotions/{promotion}": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/promotions/promotion",
+                "operationId": "getAcademicPromotionsPromotion",
+                "parameters": [
+                    {
+                        "name": "promotion",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Remplacer academic/promotions/promotion",
+                "operationId": "putAcademicPromotionsPromotion",
+                "parameters": [
+                    {
+                        "name": "promotion",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "program_id": {
+                                        "type": "integer"
+                                    },
+                                    "level_id": {
+                                        "type": "integer"
+                                    },
+                                    "academic_year_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "INACTIVE"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "program_id",
+                                    "level_id",
+                                    "academic_year_id",
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/student-campaigns": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/student campaigns",
+                "operationId": "getAcademicStudentCampaigns",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/student-imports": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/student imports",
+                "operationId": "getAcademicStudentImports",
+                "parameters": [
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/academic/student-imports/confirm": {
             "post": {
                 "tags": [
@@ -612,6 +1563,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -678,6 +1632,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -724,6 +1681,141 @@
                 }
             }
         },
+        "/api/v1/academic/student-imports/template": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/student imports/template",
+                "operationId": "getAcademicStudentImportsTemplate",
+                "parameters": [
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/student-imports/{studentImport}/cancel": {
+            "patch": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Mettre à jour academic/student imports/studentImport/cancel",
+                "operationId": "patchAcademicStudentImportsStudentImportCancel",
+                "parameters": [
+                    {
+                        "name": "studentImport",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/student-imports/{studentImport}/errors": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/student imports/studentImport/errors",
+                "operationId": "getAcademicStudentImportsStudentImportErrors",
+                "parameters": [
+                    {
+                        "name": "studentImport",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/academic/students": {
             "get": {
                 "tags": [
@@ -739,6 +1831,64 @@
                         "schema": {
                             "type": "string",
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "program_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "promotion_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "academic_year_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "SUSPENDED",
+                                "ARCHIVED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "account",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "WITH_ACCOUNT",
+                                "WITHOUT_ACCOUNT"
+                            ]
                         }
                     },
                     {
@@ -789,6 +1939,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -824,13 +1977,318 @@
                                         "type": "string",
                                         "example": null
                                     },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "middle_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "MALE",
+                                            "FEMALE"
+                                        ]
+                                    },
+                                    "birth_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": null
+                                    },
                                     "promotion_id": {
                                         "type": "integer"
                                     }
                                 },
                                 "required": [
                                     "university_id",
-                                    "student_number"
+                                    "student_number",
+                                    "promotion_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/students/{student}": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/students/student",
+                "operationId": "getAcademicStudentsStudent",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Remplacer academic/students/student",
+                "operationId": "putAcademicStudentsStudent",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "national_reference": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "student_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "middle_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "MALE",
+                                            "FEMALE"
+                                        ]
+                                    },
+                                    "birth_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "promotion_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "student_number",
+                                    "promotion_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/students/{student}/academic-record": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/students/student/academic record",
+                "operationId": "getAcademicStudentsStudentAcademicRecord",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/students/{student}/status": {
+            "patch": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Mettre à jour academic/students/student/status",
+                "operationId": "patchAcademicStudentsStudentStatus",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "SUSPENDED",
+                                            "ARCHIVED"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "status"
                                 ]
                             }
                         }
@@ -845,17 +2303,6 @@
                 ],
                 "summary": "Consulter academic/years",
                 "operationId": "getAcademicYears",
-                "parameters": [
-                    {
-                        "name": "university_id",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/Success"
@@ -895,6 +2342,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -914,10 +2364,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "institution_id": {
-                                        "type": "string",
-                                        "format": "uuid"
-                                    },
                                     "label": {
                                         "type": "string",
                                         "example": null
@@ -932,7 +2378,6 @@
                                     }
                                 },
                                 "required": [
-                                    "institution_id",
                                     "label",
                                     "starts_on",
                                     "ends_on"
@@ -941,6 +2386,131 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/academic/years/{year}": {
+            "put": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Remplacer academic/years/year",
+                "operationId": "putAcademicYearsYear",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "starts_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "ends_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "starts_on",
+                                    "ends_on"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/academic/years/{year}/current": {
+            "patch": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Mettre à jour academic/years/year/current",
+                "operationId": "patchAcademicYearsYearCurrent",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/admissions/applications": {
@@ -959,6 +2529,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1029,6 +2602,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -1089,6 +2668,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1152,6 +2737,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -1182,6 +2773,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1264,6 +2858,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -1313,6 +2913,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1384,6 +2987,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -1446,6 +3055,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -1502,6 +3117,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1560,6 +3181,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1623,6 +3247,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -1658,9 +3285,9 @@
                         "name": "hash",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Valeur textuelle.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1673,6 +3300,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1702,13 +3332,114 @@
                 }
             }
         },
-        "/api/v1/auth/login": {
+        "/api/v1/auth/institution-registration": {
             "post": {
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Créer ou déclencher auth/login",
-                "operationId": "postAuthLogin",
+                "summary": "Créer ou déclencher auth/institution registration",
+                "operationId": "postAuthInstitutionRegistration",
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "institution_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "UNIVERSITY",
+                                            "HOSPITAL"
+                                        ]
+                                    },
+                                    "institution_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "middle_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "FEMALE",
+                                            "MALE",
+                                            "OTHER"
+                                        ]
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "job_title": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "mot-de-passe-securise"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "mot-de-passe-securise"
+                                    },
+                                    "accepted": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "institution_type",
+                                    "institution_name",
+                                    "last_name",
+                                    "first_name",
+                                    "email",
+                                    "phone",
+                                    "job_title",
+                                    "password",
+                                    "password_confirmation",
+                                    "accepted"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/institution-requests": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/institution requests",
+                "operationId": "getAuthInstitutionRequests",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/Success"
@@ -1726,6 +3457,197 @@
                         "$ref": "#/components/responses/TooManyRequests"
                     }
                 },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/institution-requests/{institutionAccountRequest}": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/institution requests/institutionAccountRequest",
+                "operationId": "getAuthInstitutionRequestsInstitutionAccountRequest",
+                "parameters": [
+                    {
+                        "name": "institutionAccountRequest",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/institution-requests/{institutionAccountRequest}/approve": {
+            "patch": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Mettre à jour auth/institution requests/institutionAccountRequest/approve",
+                "operationId": "patchAuthInstitutionRequestsInstitutionAccountRequestApprove",
+                "parameters": [
+                    {
+                        "name": "institutionAccountRequest",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/institution-requests/{institutionAccountRequest}/reject": {
+            "patch": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Mettre à jour auth/institution requests/institutionAccountRequest/reject",
+                "operationId": "patchAuthInstitutionRequestsInstitutionAccountRequestReject",
+                "parameters": [
+                    {
+                        "name": "institutionAccountRequest",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Créer ou déclencher auth/login",
+                "operationId": "postAuthLogin",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1735,7 +3657,7 @@
                                 "properties": {
                                     "email": {
                                         "type": "string",
-                                        "format": "email"
+                                        "example": null
                                     },
                                     "password": {
                                         "type": "string",
@@ -1768,6 +3690,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1814,6 +3739,110 @@
                 ]
             }
         },
+        "/api/v1/auth/member-invitations/{token}": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/member invitations/token",
+                "operationId": "getAuthMemberInvitationsToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "description": "Valeur textuelle.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/member-invitations/{token}/register": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Créer ou déclencher auth/member invitations/token/register",
+                "operationId": "postAuthMemberInvitationsTokenRegister",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "description": "Valeur textuelle.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "mot-de-passe-securise"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "mot-de-passe-securise"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "password",
+                                    "password_confirmation"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/password/forgot": {
             "post": {
                 "tags": [
@@ -1825,11 +3854,8 @@
                     "200": {
                         "$ref": "#/components/responses/Success"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthenticated"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1870,11 +3896,8 @@
                     "200": {
                         "$ref": "#/components/responses/Success"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthenticated"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -1935,6 +3958,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2051,6 +4077,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2099,6 +4128,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2130,6 +4162,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2155,11 +4190,8 @@
                     "201": {
                         "$ref": "#/components/responses/Success"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthenticated"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2189,11 +4221,19 @@
                                     },
                                     "password": {
                                         "type": "string",
-                                        "example": "mot-de-passe-securise"
+                                        "format": "password",
+                                        "minLength": 8,
+                                        "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9\\s]).{8,}$",
+                                        "description": "Au moins 8 caractères, avec une lettre majuscule, une lettre minuscule et un caractère spécial.",
+                                        "example": "Secure@123"
                                     },
                                     "password_confirmation": {
                                         "type": "string",
-                                        "example": "mot-de-passe-securise"
+                                        "format": "password",
+                                        "minLength": 8,
+                                        "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9\\s]).{8,}$",
+                                        "description": "Au moins 8 caractères, avec une lettre majuscule, une lettre minuscule et un caractère spécial.",
+                                        "example": "Secure@123"
                                     },
                                     "nationality": {
                                         "type": "string",
@@ -2214,7 +4254,6 @@
                                 },
                                 "required": [
                                     "registration_token",
-                                    "email",
                                     "password",
                                     "password_confirmation"
                                 ]
@@ -2235,11 +4274,8 @@
                     "201": {
                         "$ref": "#/components/responses/Success"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthenticated"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2259,9 +4295,6 @@
                                         "type": "string",
                                         "format": "uuid"
                                     },
-                                    "promotion_id": {
-                                        "type": "integer"
-                                    },
                                     "academic_year_id": {
                                         "type": "integer"
                                     },
@@ -2272,12 +4305,51 @@
                                 },
                                 "required": [
                                     "university_id",
-                                    "promotion_id",
                                     "academic_year_id",
                                     "student_number"
                                 ]
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/student-registration/current-academic-year": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/student registration/current academic year",
+                "operationId": "getAuthStudentRegistrationCurrentAcademicYear",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/student-registration/universities": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/student registration/universities",
+                "operationId": "getAuthStudentRegistrationUniversities",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
                     }
                 }
             }
@@ -2290,6 +4362,42 @@
                 "summary": "Consulter auth/users",
                 "operationId": "getAuthUsers",
                 "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
                     {
                         "name": "per_page",
                         "in": "query",
@@ -2308,6 +4416,98 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/users/{user}": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/users/user",
+                "operationId": "getAuthUsersUser",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/users/{user}/avatar": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Consulter auth/users/user/avatar",
+                "operationId": "getAuthUsersUserAvatar",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2352,6 +4552,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2389,6 +4595,311 @@
                 }
             }
         },
+        "/api/v1/campaign-media/campaigns/{campaign}/common-letter": {
+            "post": {
+                "tags": [
+                    "Campaign-media"
+                ],
+                "summary": "Créer ou déclencher campaign media/campaigns/campaign/common letter",
+                "operationId": "postCampaignMediaCampaignsCampaignCommonLetter",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/campaign-media/campaigns/{campaign}/documents": {
+            "post": {
+                "tags": [
+                    "Campaign-media"
+                ],
+                "summary": "Créer ou déclencher campaign media/campaigns/campaign/documents",
+                "operationId": "postCampaignMediaCampaignsCampaignDocuments",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/campaign-media/campaigns/{campaign}/hospitals/{campaignHospital}/letter": {
+            "post": {
+                "tags": [
+                    "Campaign-media"
+                ],
+                "summary": "Créer ou déclencher campaign media/campaigns/campaign/hospitals/campaignHospital/letter",
+                "operationId": "postCampaignMediaCampaignsCampaignHospitalsCampaignHospitalLetter",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "campaignHospital",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/campaign-media/{media}": {
+            "delete": {
+                "tags": [
+                    "Campaign-media"
+                ],
+                "summary": "Supprimer campaign media/media",
+                "operationId": "deleteCampaignMediaMedia",
+                "parameters": [
+                    {
+                        "name": "media",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "$ref": "#/components/responses/NoContent"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaign-media/{media}/download": {
+            "get": {
+                "tags": [
+                    "Campaign-media"
+                ],
+                "summary": "Consulter campaign media/media/download",
+                "operationId": "getCampaignMediaMediaDownload",
+                "parameters": [
+                    {
+                        "name": "media",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/documents": {
             "post": {
                 "tags": [
@@ -2405,6 +4916,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2504,6 +5018,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2547,6 +5067,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2572,11 +5095,8 @@
                     "200": {
                         "$ref": "#/components/responses/Success"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthenticated"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2657,6 +5177,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2734,6 +5257,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2805,6 +5331,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2847,6 +5376,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -2893,6 +5428,41 @@
                 "summary": "Consulter institutions",
                 "operationId": "getInstitutions",
                 "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "UNIVERSITY",
+                                "HOSPITAL"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "PENDING",
+                                "ACTIVE",
+                                "SUSPENDED",
+                                "DISABLED"
+                            ]
+                        }
+                    },
                     {
                         "name": "per_page",
                         "in": "query",
@@ -2941,6 +5511,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -2962,7 +5535,12 @@
                                 "properties": {
                                     "type": {
                                         "type": "string",
-                                        "example": null
+                                        "enum": [
+                                            "UNIVERSITY",
+                                            "HOSPITAL",
+                                            "CLINIC",
+                                            "OTHER"
+                                        ]
                                     },
                                     "name": {
                                         "type": "string",
@@ -2973,6 +5551,40 @@
                                         "example": null
                                     },
                                     "registration_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "legal_form": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "ownership_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "PUBLIC",
+                                            "PRIVATE",
+                                            "FAITH_BASED",
+                                            "MIXED",
+                                            "OTHER"
+                                        ]
+                                    },
+                                    "accreditation_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "tax_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "founded_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "primary_language": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "timezone": {
                                         "type": "string",
                                         "example": null
                                     },
@@ -3038,6 +5650,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3079,6 +5694,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3100,7 +5721,12 @@
                                 "properties": {
                                     "type": {
                                         "type": "string",
-                                        "example": null
+                                        "enum": [
+                                            "UNIVERSITY",
+                                            "HOSPITAL",
+                                            "CLINIC",
+                                            "OTHER"
+                                        ]
                                     },
                                     "name": {
                                         "type": "string",
@@ -3111,6 +5737,40 @@
                                         "example": null
                                     },
                                     "registration_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "legal_form": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "ownership_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "PUBLIC",
+                                            "PRIVATE",
+                                            "FAITH_BASED",
+                                            "MIXED",
+                                            "OTHER"
+                                        ]
+                                    },
+                                    "accreditation_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "tax_number": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "founded_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "primary_language": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "timezone": {
                                         "type": "string",
                                         "example": null
                                     },
@@ -3162,6 +5822,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3186,6 +5852,10 @@
                                         "example": null
                                     },
                                     "address_line": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "commune": {
                                         "type": "string",
                                         "example": null
                                     },
@@ -3221,6 +5891,114 @@
                 }
             }
         },
+        "/api/v1/institutions/{institution}/addresses/{id}": {
+            "put": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Remplacer institutions/institution/addresses/id",
+                "operationId": "putInstitutionsInstitutionAddressesId",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "address_line": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "commune": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "province": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "address_line",
+                                    "city",
+                                    "country"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/institutions/{institution}/contacts": {
             "post": {
                 "tags": [
@@ -3249,6 +6027,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -3299,6 +6083,441 @@
                 }
             }
         },
+        "/api/v1/institutions/{institution}/contacts/{id}": {
+            "put": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Remplacer institutions/institution/contacts/id",
+                "operationId": "putInstitutionsInstitutionContactsId",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "EMAIL",
+                                            "PHONE",
+                                            "WHATSAPP"
+                                        ]
+                                    },
+                                    "value": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "label": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "type",
+                                    "value"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/institutions/{institution}/logo": {
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/logo",
+                "operationId": "getInstitutionsInstitutionLogo",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Créer ou déclencher institutions/institution/logo",
+                "operationId": "postInstitutionsInstitutionLogo",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "logo"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Supprimer institutions/institution/logo",
+                "operationId": "deleteInstitutionsInstitutionLogo",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "$ref": "#/components/responses/NoContent"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/institutions/{institution}/member-invitations": {
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/member invitations",
+                "operationId": "getInstitutionsInstitutionMemberInvitations",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Créer ou déclencher institutions/institution/member invitations",
+                "operationId": "postInstitutionsInstitutionMemberInvitations",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "INSTITUTION_ADMIN",
+                                            "ACADEMIC_MANAGER",
+                                            "HOSPITAL_MANAGER",
+                                            "SUPERVISOR",
+                                            "FINANCE_OFFICER",
+                                            "MEMBER"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "email",
+                                    "role"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/institutions/{institution}/member-invitations/{invitation}": {
+            "delete": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Supprimer institutions/institution/member invitations/invitation",
+                "operationId": "deleteInstitutionsInstitutionMemberInvitationsInvitation",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "invitation",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "$ref": "#/components/responses/NoContent"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/institutions/{institution}/members": {
             "post": {
                 "tags": [
@@ -3328,6 +6547,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3347,9 +6572,9 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "user_id": {
+                                    "email": {
                                         "type": "string",
-                                        "format": "uuid"
+                                        "format": "email"
                                     },
                                     "role": {
                                         "type": "string",
@@ -3359,22 +6584,148 @@
                                             "HOSPITAL_MANAGER",
                                             "SUPERVISOR",
                                             "FINANCE_OFFICER",
-                                            "STUDENT",
                                             "MEMBER"
                                         ]
                                     }
                                 },
                                 "required": [
-                                    "user_id",
+                                    "email",
                                     "role"
                                 ]
                             }
                         }
                     }
                 }
+            },
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/members",
+                "operationId": "getInstitutionsInstitutionMembers",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/institutions/{institution}/members/{user}": {
+            "put": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Remplacer institutions/institution/members/user",
+                "operationId": "putInstitutionsInstitutionMembersUser",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "INSTITUTION_ADMIN",
+                                            "ACADEMIC_MANAGER",
+                                            "HOSPITAL_MANAGER",
+                                            "SUPERVISOR",
+                                            "FINANCE_OFFICER",
+                                            "MEMBER"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "role"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Institutions"
@@ -3413,6 +6764,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3425,6 +6782,92 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/institutions/{institution}/notifications": {
+            "post": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Créer ou déclencher institutions/institution/notifications",
+                "operationId": "postInstitutionsInstitutionNotifications",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "severity": {
+                                        "type": "string",
+                                        "enum": [
+                                            "INFO",
+                                            "SUCCESS",
+                                            "WARNING",
+                                            "CRITICAL"
+                                        ]
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "message"
+                                ]
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/institutions/{institution}/status": {
@@ -3455,6 +6898,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -3522,6 +6971,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3546,7 +7001,10 @@
                                     },
                                     "type": {
                                         "type": "string",
-                                        "example": null
+                                        "enum": [
+                                            "DEPARTMENT",
+                                            "SERVICE"
+                                        ]
                                     },
                                     "code": {
                                         "type": "string",
@@ -3555,6 +7013,105 @@
                                     "name": {
                                         "type": "string",
                                         "example": null
+                                    }
+                                },
+                                "required": [
+                                    "type",
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/institutions/{institution}/units/{id}": {
+            "put": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Remplacer institutions/institution/units/id",
+                "operationId": "putInstitutionsInstitutionUnitsId",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant interne numérique.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "parent_id": {
+                                        "type": "integer"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "DEPARTMENT",
+                                            "SERVICE"
+                                        ]
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "INACTIVE"
+                                        ]
                                     }
                                 },
                                 "required": [
@@ -3589,9 +7146,9 @@
                         "name": "resource",
                         "in": "path",
                         "required": true,
-                        "description": "Identifiant interne numérique.",
+                        "description": "Valeur textuelle.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     },
                     {
@@ -3613,6 +7170,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -3644,6 +7207,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -3732,6 +7298,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3798,6 +7370,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -3851,6 +7429,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -3920,6 +7501,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -3994,6 +7581,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4038,6 +7631,16 @@
                 ],
                 "summary": "Consulter notifications",
                 "operationId": "getNotifications",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/Success"
@@ -4093,6 +7696,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4134,6 +7740,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -4346,6 +7958,9 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4435,6 +8050,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4489,6 +8110,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -4565,6 +8189,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4635,6 +8265,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -4712,6 +8345,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4753,6 +8392,12 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -4829,6 +8474,12 @@
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     },
@@ -4871,6 +8522,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
@@ -5030,6 +8684,10 @@
             },
             "IntegerListItem": {
                 "type": "integer"
+            },
+            "UuidListItem": {
+                "type": "string",
+                "format": "uuid"
             }
         },
         "responses": {

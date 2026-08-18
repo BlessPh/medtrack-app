@@ -8,6 +8,7 @@ use App\Modules\Academic\Models\Promotion;
 use App\Modules\Academic\Models\Student;
 use App\Modules\Academic\Policies\AcademicPolicy;
 use App\Modules\Academic\Services\EligibilityService;
+use App\Modules\Academic\Services\RichTextSanitizer;
 use App\Modules\Institution\Models\Institution;
 use App\Shared\Services\InstitutionAccess;
 use App\Modules\Notification\Notifications\InstitutionNotification;
@@ -90,6 +91,9 @@ class CampaignManagementController
     private function validated(Request $request, ?Campaign $campaign = null): array
     {
         $data = $request->validate(['university_id' => ['required', 'uuid'], 'academic_year_id' => ['required', 'integer', 'exists:academic_year_references,id'], 'name' => ['required', 'string', 'max:200'], 'regime' => ['nullable', 'string', 'max:40'], 'strategy' => ['required', Rule::in(['STANDARD', 'D4_RESERVATION'])], 'instructions' => ['nullable', 'string', 'max:10000'], 'starts_at' => ['required', 'date'], 'ends_at' => ['required', 'date', 'after:starts_at'], 'promotion_ids' => ['required', 'array', 'min:1'], 'promotion_ids.*' => ['integer', 'distinct', 'exists:promotions,id'], 'hospital_ids' => ['nullable', 'array', 'max:10'], 'hospital_ids.*' => ['uuid', 'distinct', Rule::exists('institutions', 'public_id')->where('type', 'HOSPITAL')]]);
+        // Les consignes sont du HTML enrichi provenant d’un contentEditable :
+        // elles doivent être nettoyées avant toute écriture en base.
+        $data['instructions'] = app(RichTextSanitizer::class)->sanitize($data['instructions'] ?? null);
         $university = $this->university($data['university_id']);
         $valid = Promotion::query()->whereIn('id', $data['promotion_ids'])->where('academic_year_reference_id', $data['academic_year_id'])->whereHas('program', fn ($query) => $query->where('university_id', $university->id))->count();
         abort_unless($valid === count(array_unique($data['promotion_ids'])), 422, 'Les promotions doivent appartenir à cette université et à l’année sélectionnée.');

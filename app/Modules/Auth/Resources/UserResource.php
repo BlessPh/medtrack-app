@@ -30,7 +30,9 @@ class UserResource extends JsonResource
             : null;
 
         return [
-            'id' => $this->public_id, 'name' => $this->name, 'email' => $this->email, 'phone' => $this->phone,
+            'id' => $this->public_id, 'name' => $this->name, 'username' => $this->username,
+            'email' => str_ends_with((string) $this->email, '@accounts.medtrack.invalid') ? null : $this->email,
+            'phone' => $this->phone,
             'roles' => $assignments->pluck('name')->unique()->values(),
             'institutions' => $institutions,
             'institution_onboarding' => $onboardingRequest ? [

@@ -38,7 +38,7 @@ class OpenApiGenerator
         $tag = $this->tag(explode('/', $relative)[0]);
         $key = strtoupper($method).' '.$path;
         $public = str_ends_with($path, '/health') || in_array($key, $this->publicOperations(), true);
-        $operation = ['tags' => [$tag], 'summary' => $this->summary($method, $relative), 'operationId' => Str::camel(strtolower($method).'_'.preg_replace('/[{}]/', '', str_replace(['/', '-'], '_', $relative))), 'parameters' => $this->parameters($path, $key), 'responses' => $this->operationResponses($method, $path)];
+        $operation = ['tags' => [$tag], 'summary' => $this->summary($method, $relative), 'operationId' => Str::camel(strtolower($method).'_'.preg_replace('/[{}]/', '', str_replace(['/', '-'], '_', $relative))), 'parameters' => $this->parameters($path, $key), 'responses' => $this->operationResponses($method, $path, $public)];
         if (! $public) {
             $operation['security'] = [['bearerAuth' => []]];
         }
@@ -58,7 +58,13 @@ class OpenApiGenerator
     private function requestBody(string $key): array
     {
         $fields = $this->payloads()[$key] ?? [];
-        $multipart = in_array($key, ['POST /api/v1/academic/student-imports/preview', 'POST /api/v1/documents', 'POST /api/v1/auth/profile/avatar'], true);
+        $multipart = in_array($key, [
+            'POST /api/v1/academic/student-imports/preview', 'POST /api/v1/documents',
+            'POST /api/v1/auth/profile/avatar', 'POST /api/v1/institutions/{institution}/logo',
+            'POST /api/v1/campaign-media/campaigns/{campaign}/common-letter',
+            'POST /api/v1/campaign-media/campaigns/{campaign}/documents',
+            'POST /api/v1/campaign-media/campaigns/{campaign}/hospitals/{campaignHospital}/letter',
+        ], true);
         $properties = [];
         $required = [];
         foreach ($fields as $name => $definition) {
@@ -106,6 +112,16 @@ class OpenApiGenerator
         if ($type === 'object') {
             return ['type' => 'object', 'additionalProperties' => true];
         }
+        if ($type === 'student_password') {
+            return [
+                'type' => 'string',
+                'format' => 'password',
+                'minLength' => 8,
+                'pattern' => '^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9\\s]).{8,}$',
+                'description' => 'Au moins 8 caractères, avec une lettre majuscule, une lettre minuscule et un caractère spécial.',
+                'example' => 'Secure@123',
+            ];
+        }
 
         return ['type' => 'string', 'example' => str_contains($name, 'password') ? 'mot-de-passe-securise' : null];
     }
@@ -115,7 +131,11 @@ class OpenApiGenerator
         $parameters = [];
         preg_match_all('/\{([^}]+)\}/', $path, $matches);
         foreach ($matches[1] as $name) {
-            $publicId = in_array($name, ['institution', 'student', 'user', 'application', 'internship', 'evaluation', 'document', 'transaction'], true);
+            $publicId = in_array($name, ['institution', 'student', 'user', 'application', 'internship', 'evaluation', 'document', 'transaction', 'media', 'invitation', 'institutionAccountRequest'], true);
+            if (in_array($name, ['token', 'hash', 'resource'], true)) {
+                $parameters[] = ['name' => $name, 'in' => 'path', 'required' => true, 'description' => 'Valeur textuelle.', 'schema' => ['type' => 'string']];
+                continue;
+            }
             $parameters[] = ['name' => $name, 'in' => 'path', 'required' => true, 'description' => $publicId ? 'Identifiant public UUID.' : 'Identifiant interne numérique.', 'schema' => $publicId ? ['type' => 'string', 'format' => 'uuid'] : ['type' => 'integer']];
         }
         foreach ($this->queries()[$key] ?? [] as $name => $type) {
@@ -125,14 +145,23 @@ class OpenApiGenerator
         return $parameters;
     }
 
-    private function operationResponses(string $method, string $path): array
+    private function operationResponses(string $method, string $path, bool $public): array
     {
         $noContent = $method === 'DELETE' || str_ends_with($path, '/logout') || str_ends_with($path, '/read-all');
         $created = $method === 'POST' && ! in_array($path, ['/api/v1/auth/login', '/api/v1/auth/logout', '/api/v1/auth/password/forgot', '/api/v1/auth/password/reset', '/api/v1/auth/email/verification-notification', '/api/v1/finance/callbacks/maishapay', '/api/v1/academic/student-imports/preview'], true);
         $success = $noContent ? '204' : ($created ? '201' : '200');
         $responses = [$success => ['$ref' => '#/components/responses/'.($success === '204' ? 'NoContent' : 'Success')]];
         if (! str_ends_with($path, '/health')) {
-            $responses += ['401' => ['$ref' => '#/components/responses/Unauthenticated'], '403' => ['$ref' => '#/components/responses/Forbidden'], '422' => ['$ref' => '#/components/responses/ValidationError'], '429' => ['$ref' => '#/components/responses/TooManyRequests']];
+            if (! $public) {
+                $responses += ['401' => ['$ref' => '#/components/responses/Unauthenticated'], '403' => ['$ref' => '#/components/responses/Forbidden']];
+            }
+            if (str_contains($path, '{')) {
+                $responses['404'] = ['$ref' => '#/components/responses/ValidationError'];
+            }
+            if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+                $responses['409'] = ['$ref' => '#/components/responses/ValidationError'];
+            }
+            $responses += ['422' => ['$ref' => '#/components/responses/ValidationError'], '429' => ['$ref' => '#/components/responses/TooManyRequests']];
         }
 
         return $responses;
@@ -162,49 +191,73 @@ class OpenApiGenerator
 
     private function publicOperations(): array
     {
-        return ['POST /api/v1/auth/login', 'POST /api/v1/auth/password/forgot', 'POST /api/v1/auth/password/reset', 'POST /api/v1/auth/student-registration/check', 'POST /api/v1/auth/student-registration', 'POST /api/v1/finance/callbacks/maishapay'];
+        return ['POST /api/v1/auth/login', 'POST /api/v1/auth/password/forgot', 'POST /api/v1/auth/password/reset', 'POST /api/v1/auth/institution-registration', 'GET /api/v1/auth/member-invitations/{token}', 'POST /api/v1/auth/member-invitations/{token}/register', 'POST /api/v1/auth/student-registration/check', 'POST /api/v1/auth/student-registration', 'GET /api/v1/auth/student-registration/universities', 'GET /api/v1/auth/student-registration/current-academic-year', 'POST /api/v1/finance/callbacks/maishapay'];
     }
 
     private function queries(): array
     {
         return [
             'GET /api/v1/academic/current-context' => ['university_id' => 'uuid'],
-            'GET /api/v1/academic/programs' => ['university_id' => 'uuid'],
-            'GET /api/v1/academic/years' => ['university_id' => 'uuid'],
+            'GET /api/v1/academic/dashboard' => ['university_id' => 'uuid'],
+            'GET /api/v1/academic/departments' => ['university_id' => 'uuid'],
+            'GET /api/v1/academic/programs' => ['university_id' => 'uuid', 'status' => '?enum:ACTIVE|INACTIVE'],
             'GET /api/v1/academic/promotions' => ['university_id' => 'uuid', 'program_id' => '?integer', 'academic_year_id' => '?integer'],
-            'GET /api/v1/academic/students' => ['university_id' => 'uuid', 'per_page' => '?integer'],
+            'GET /api/v1/academic/students' => ['university_id' => 'uuid', 'search' => '?string', 'program_id' => '?integer', 'promotion_id' => '?integer', 'academic_year_id' => '?integer', 'status' => '?enum:ACTIVE|SUSPENDED|ARCHIVED', 'account' => '?enum:WITH_ACCOUNT|WITHOUT_ACCOUNT', 'per_page' => '?integer'],
+            'GET /api/v1/academic/campaigns' => ['university_id' => 'uuid', 'status' => '?enum:DRAFT|OPEN|CLOSED|CANCELLED', 'academic_year_id' => '?integer'],
+            'GET /api/v1/academic/campaign-requests' => ['hospital_id' => 'uuid'],
+            'GET /api/v1/academic/student-imports' => ['university_id' => 'uuid', 'per_page' => '?integer'],
+            'GET /api/v1/academic/student-imports/template' => ['university_id' => 'uuid'],
+            'GET /api/v1/notifications' => ['per_page' => '?integer'],
             'GET /api/v1/reporting/dashboard' => ['institution_id' => '?uuid'],
             'GET /api/v1/reporting/search' => ['institution_id' => 'uuid', 'type' => 'enum:students|applications|internships|payments', 'q' => '?string', 'status' => '?string', 'per_page' => '?integer'],
             'GET /api/v1/reporting/export' => ['institution_id' => 'uuid', 'type' => 'enum:students|applications|internships|payments'],
-            'GET /api/v1/institutions' => ['per_page' => '?integer'],
-            'GET /api/v1/auth/users' => ['per_page' => '?integer'],
+            'GET /api/v1/institutions' => ['search' => '?string', 'type' => '?enum:UNIVERSITY|HOSPITAL', 'status' => '?enum:PENDING|ACTIVE|SUSPENDED|DISABLED', 'per_page' => '?integer'],
+            'GET /api/v1/auth/users' => ['search' => '?string', 'status' => '?string', 'role' => '?string', 'institution_id' => '?uuid', 'per_page' => '?integer'],
         ];
     }
 
     private function payloads(): array
     {
         return [
-            'POST /api/v1/auth/login' => ['email' => 'email', 'password' => 'string'],
+            'POST /api/v1/auth/login' => ['email' => 'string', 'password' => 'string'],
             'POST /api/v1/auth/password/forgot' => ['email' => 'email'],
             'POST /api/v1/auth/password/reset' => ['token' => 'string', 'email' => 'email', 'password' => 'string', 'password_confirmation' => 'string'],
+            'POST /api/v1/auth/institution-registration' => ['institution_type' => 'enum:UNIVERSITY|HOSPITAL', 'institution_name' => 'string', 'last_name' => 'string', 'middle_name' => '?string', 'first_name' => 'string', 'gender' => '?enum:FEMALE|MALE|OTHER', 'email' => 'email', 'phone' => 'string', 'job_title' => 'string', 'password' => 'string', 'password_confirmation' => 'string', 'accepted' => 'boolean'],
+            'PATCH /api/v1/auth/institution-requests/{institutionAccountRequest}/reject' => ['reason' => 'string'],
+            'POST /api/v1/auth/member-invitations/{token}/register' => ['name' => 'string', 'phone' => '?string', 'password' => 'string', 'password_confirmation' => 'string'],
             'PUT /api/v1/auth/profile' => ['name' => 'string', 'phone' => '?string', 'first_name' => '?string', 'last_name' => '?string', 'gender' => '?string', 'birth_date' => '?date', 'nationality' => '?string', 'address' => '?string', 'city' => '?string', 'country' => '?string'],
             'POST /api/v1/auth/profile/avatar' => ['avatar' => 'file'],
-            'POST /api/v1/auth/student-registration/check' => ['university_id' => 'uuid', 'promotion_id' => 'integer', 'academic_year_id' => 'integer', 'student_number' => 'string'],
-            'POST /api/v1/auth/student-registration' => ['registration_token' => 'string', 'email' => 'email', 'phone' => '?string', 'password' => 'string', 'password_confirmation' => 'string', 'nationality' => '?string', 'address' => '?string', 'city' => '?string', 'country' => '?string'],
+            'POST /api/v1/auth/student-registration/check' => ['university_id' => 'uuid', 'academic_year_id' => 'integer', 'student_number' => 'string'],
+            'POST /api/v1/auth/student-registration' => ['registration_token' => 'string', 'email' => '?email', 'phone' => '?string', 'password' => 'student_password', 'password_confirmation' => 'student_password', 'nationality' => '?string', 'address' => '?string', 'city' => '?string', 'country' => '?string'],
             'PATCH /api/v1/auth/users/{user}/status' => ['status' => 'enum:ACTIVE|SUSPENDED|DISABLED'],
             'POST /api/v1/institutions' => $this->institutionPayload(),
             'PUT /api/v1/institutions/{institution}' => $this->institutionPayload(),
             'PATCH /api/v1/institutions/{institution}/status' => ['status' => 'enum:ACTIVE|SUSPENDED|DISABLED'],
-            'POST /api/v1/institutions/{institution}/units' => ['parent_id' => '?integer', 'type' => 'string', 'code' => '?string', 'name' => 'string'],
-            'POST /api/v1/institutions/{institution}/addresses' => ['label' => '?string', 'address_line' => 'string', 'city' => 'string', 'province' => '?string', 'country' => '?string', 'latitude' => '?number', 'longitude' => '?number', 'is_primary' => '?boolean'],
+            'POST /api/v1/institutions/{institution}/units' => ['parent_id' => '?integer', 'type' => 'enum:DEPARTMENT|SERVICE', 'code' => '?string', 'name' => 'string'],
+            'PUT /api/v1/institutions/{institution}/units/{id}' => ['parent_id' => '?integer', 'type' => 'enum:DEPARTMENT|SERVICE', 'code' => '?string', 'name' => 'string', 'status' => '?enum:ACTIVE|INACTIVE'],
+            'POST /api/v1/institutions/{institution}/addresses' => ['label' => '?string', 'address_line' => 'string', 'commune' => '?string', 'city' => 'string', 'province' => '?string', 'country' => '?string', 'latitude' => '?number', 'longitude' => '?number', 'is_primary' => '?boolean'],
+            'PUT /api/v1/institutions/{institution}/addresses/{id}' => ['label' => '?string', 'address_line' => 'string', 'commune' => '?string', 'city' => 'string', 'province' => '?string', 'country' => 'string', 'latitude' => '?number', 'longitude' => '?number', 'is_primary' => '?boolean'],
             'POST /api/v1/institutions/{institution}/contacts' => ['type' => 'enum:EMAIL|PHONE|WHATSAPP', 'value' => 'string', 'label' => '?string', 'is_primary' => '?boolean'],
-            'POST /api/v1/institutions/{institution}/members' => ['user_id' => 'uuid', 'role' => 'enum:INSTITUTION_ADMIN|ACADEMIC_MANAGER|HOSPITAL_MANAGER|SUPERVISOR|FINANCE_OFFICER|STUDENT|MEMBER'],
-            'POST /api/v1/academic/programs' => ['university_id' => 'uuid', 'code' => 'string', 'name' => 'string', 'degree_type' => '?string', 'duration_years' => '?integer'],
-            'POST /api/v1/academic/years' => ['institution_id' => 'uuid', 'label' => 'string', 'starts_on' => 'date', 'ends_on' => 'date'],
+            'PUT /api/v1/institutions/{institution}/contacts/{id}' => ['type' => 'enum:EMAIL|PHONE|WHATSAPP', 'value' => 'string', 'label' => '?string', 'is_primary' => '?boolean'],
+            'POST /api/v1/institutions/{institution}/logo' => ['logo' => 'file'],
+            'POST /api/v1/institutions/{institution}/members' => ['email' => 'email', 'role' => 'enum:INSTITUTION_ADMIN|ACADEMIC_MANAGER|HOSPITAL_MANAGER|SUPERVISOR|FINANCE_OFFICER|MEMBER'],
+            'PUT /api/v1/institutions/{institution}/members/{user}' => ['role' => 'enum:INSTITUTION_ADMIN|ACADEMIC_MANAGER|HOSPITAL_MANAGER|SUPERVISOR|FINANCE_OFFICER|MEMBER'],
+            'POST /api/v1/institutions/{institution}/member-invitations' => ['email' => 'email', 'role' => 'enum:INSTITUTION_ADMIN|ACADEMIC_MANAGER|HOSPITAL_MANAGER|SUPERVISOR|FINANCE_OFFICER|MEMBER'],
+            'POST /api/v1/institutions/{institution}/notifications' => ['title' => 'string', 'message' => 'string', 'severity' => '?enum:INFO|SUCCESS|WARNING|CRITICAL', 'url' => '?string'],
+            'POST /api/v1/academic/programs' => ['university_id' => 'uuid', 'faculty_unit_id' => '?integer', 'code' => 'string', 'name' => 'string', 'degree_type' => '?string', 'duration_years' => '?integer'],
+            'PUT /api/v1/academic/programs/{program}' => ['faculty_unit_id' => '?integer', 'code' => 'string', 'name' => 'string', 'degree_type' => '?string', 'duration_years' => '?integer', 'status' => '?enum:ACTIVE|INACTIVE'],
+            'POST /api/v1/academic/years' => ['label' => 'string', 'starts_on' => 'date', 'ends_on' => 'date'],
+            'PUT /api/v1/academic/years/{year}' => ['label' => 'string', 'starts_on' => 'date', 'ends_on' => 'date'],
             'POST /api/v1/academic/promotions' => ['program_id' => 'integer', 'level_id' => 'integer', 'academic_year_id' => 'integer', 'name' => 'string'],
-            'POST /api/v1/academic/students' => ['university_id' => 'uuid', 'user_id' => '?uuid', 'national_reference' => '?string', 'student_number' => 'string', 'promotion_id' => '?integer'],
-            'POST /api/v1/academic/campaigns' => ['university_id' => 'uuid', 'academic_year_id' => 'integer', 'name' => 'string', 'regime' => '?string', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'promotion_ids' => 'array:IntegerListItem'],
+            'PUT /api/v1/academic/promotions/{promotion}' => ['program_id' => 'integer', 'level_id' => 'integer', 'academic_year_id' => 'integer', 'name' => 'string', 'status' => '?enum:ACTIVE|INACTIVE'],
+            'POST /api/v1/academic/students' => ['university_id' => 'uuid', 'user_id' => '?uuid', 'national_reference' => '?string', 'student_number' => 'string', 'last_name' => '?string', 'middle_name' => '?string', 'first_name' => '?string', 'gender' => '?enum:MALE|FEMALE', 'birth_date' => '?date', 'email' => '?email', 'phone' => '?string', 'promotion_id' => 'integer'],
+            'PUT /api/v1/academic/students/{student}' => ['user_id' => '?uuid', 'national_reference' => '?string', 'student_number' => 'string', 'last_name' => '?string', 'middle_name' => '?string', 'first_name' => '?string', 'gender' => '?enum:MALE|FEMALE', 'birth_date' => '?date', 'email' => '?email', 'phone' => '?string', 'promotion_id' => 'integer'],
+            'PATCH /api/v1/academic/students/{student}/status' => ['status' => 'enum:ACTIVE|SUSPENDED|ARCHIVED'],
+            'POST /api/v1/academic/campaigns' => ['university_id' => 'uuid', 'academic_year_id' => 'integer', 'name' => 'string', 'regime' => '?string', 'strategy' => 'enum:STANDARD|D4_RESERVATION', 'instructions' => '?string', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'promotion_ids' => 'array:IntegerListItem', 'hospital_ids' => '?array:UuidListItem'],
+            'PUT /api/v1/academic/campaigns/{campaign}' => ['university_id' => 'uuid', 'academic_year_id' => 'integer', 'name' => 'string', 'regime' => '?string', 'strategy' => 'enum:STANDARD|D4_RESERVATION', 'instructions' => '?string', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'promotion_ids' => 'array:IntegerListItem', 'hospital_ids' => '?array:UuidListItem'],
             'PATCH /api/v1/academic/campaigns/{campaign}/status' => ['status' => 'enum:OPEN|CLOSED|CANCELLED'],
+            'PATCH /api/v1/academic/campaign-requests/{campaignHospital}/respond' => ['decision' => 'enum:ACCEPTED|DECLINED', 'capacity' => '?integer', 'note' => '?string'],
+            'POST /api/v1/academic/campaigns/{campaign}/reserve' => ['hospital_id' => 'uuid'],
             'POST /api/v1/academic/student-imports/preview' => ['university_id' => 'uuid', 'promotion_id' => 'integer', 'academic_year_id' => 'integer', 'file' => 'file'],
             'POST /api/v1/academic/student-imports/confirm' => ['university_id' => 'uuid', 'promotion_id' => 'integer', 'academic_year_id' => 'integer', 'students' => 'array:ImportedStudent'],
             'POST /api/v1/admissions/applications' => ['campaign_id' => 'integer', 'preferred_hospital_id' => '?uuid', 'motivation' => '?string'],
@@ -233,12 +286,15 @@ class OpenApiGenerator
             'POST /api/v1/finance/callbacks/maishapay' => ['reference' => 'string', 'status' => 'enum:PAID|FAILED', 'obligation_id' => '?uuid', 'amount' => '?number'],
             'POST /api/v1/finance/transactions/{transaction}/refunds' => ['amount' => 'number', 'reason' => 'string'],
             'POST /api/v1/documents' => ['owner_type' => 'enum:student|internship', 'owner_id' => 'uuid', 'collection' => 'enum:identity|proof|evaluation', 'file' => 'file'],
+            'POST /api/v1/campaign-media/campaigns/{campaign}/common-letter' => ['file' => 'file'],
+            'POST /api/v1/campaign-media/campaigns/{campaign}/documents' => ['file' => 'file'],
+            'POST /api/v1/campaign-media/campaigns/{campaign}/hospitals/{campaignHospital}/letter' => ['file' => 'file'],
         ];
     }
 
     private function institutionPayload(): array
     {
-        return ['type' => 'string', 'name' => 'string', 'short_name' => '?string', 'registration_number' => '?string', 'description' => '?string', 'website' => '?string'];
+        return ['type' => 'enum:UNIVERSITY|HOSPITAL|CLINIC|OTHER', 'name' => 'string', 'short_name' => '?string', 'registration_number' => '?string', 'legal_form' => '?string', 'ownership_type' => '?enum:PUBLIC|PRIVATE|FAITH_BASED|MIXED|OTHER', 'accreditation_number' => '?string', 'tax_number' => '?string', 'founded_on' => '?date', 'primary_language' => '?string', 'timezone' => '?string', 'description' => '?string', 'website' => '?string'];
     }
 
     private function schemas(): array
@@ -251,6 +307,7 @@ class OpenApiGenerator
             'EvaluationCriterion' => ['type' => 'object', 'required' => ['key', 'maximum'], 'properties' => ['key' => ['type' => 'string'], 'maximum' => ['type' => 'number', 'exclusiveMinimum' => 0]]],
             'FinancialItem' => ['type' => 'object', 'required' => ['label', 'quantity', 'unit_amount'], 'properties' => ['label' => ['type' => 'string'], 'quantity' => ['type' => 'number', 'exclusiveMinimum' => 0], 'unit_amount' => ['type' => 'number', 'minimum' => 0]]],
             'IntegerListItem' => ['type' => 'integer'],
+            'UuidListItem' => ['type' => 'string', 'format' => 'uuid'],
         ];
     }
 

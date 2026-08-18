@@ -59,19 +59,19 @@ Les migrations Laravel sont la source de vérité du schéma. Le projet vise SQL
 
 Les modules principaux se trouvent dans `app/Modules` :
 
-| Module | Responsabilité |
-|---|---|
-| Auth | JWT, comptes, profil, mot de passe et inscription étudiante |
-| Institution | Universités, hôpitaux, unités, contacts, membres et rôles |
-| Academic | Programmes, années, promotions, étudiants, inscriptions, campagnes et import Excel |
-| Admission | Candidatures, capacités, réservations et admissions |
-| Internship | Parcours types, stages, rotations et prolongations |
-| Scheduling | Plannings, appareils biométriques, présences et corrections |
-| Assessment | Grilles, évaluations, contestations et décisions académiques |
-| Finance | Obligations, paiements, allocations, reçus et remboursements |
-| Media | Documents privés rattachés aux dossiers métier |
-| Notification | Notifications internes et e-mails |
-| Reporting | Tableaux de bord, recherches et exports CSV |
+| Module       | Responsabilité                                                                     |
+| ------------ | ---------------------------------------------------------------------------------- |
+| Auth         | JWT, comptes, profil, mot de passe et inscription étudiante                        |
+| Institution  | Universités, hôpitaux, unités, contacts, membres et rôles                          |
+| Academic     | Programmes, années, promotions, étudiants, inscriptions, campagnes et import Excel |
+| Admission    | Candidatures, capacités, réservations et admissions                                |
+| Internship   | Parcours types, stages, rotations et prolongations                                 |
+| Scheduling   | Plannings, appareils biométriques, présences et corrections                        |
+| Assessment   | Grilles, évaluations, contestations et décisions académiques                       |
+| Finance      | Obligations, paiements, allocations, reçus et remboursements                       |
+| Media        | Documents privés rattachés aux dossiers métier                                     |
+| Notification | Notifications internes et e-mails                                                  |
+| Reporting    | Tableaux de bord, recherches et exports CSV                                        |
 
 `app/Shared` ne contient que les composants utilisés par plusieurs modules : enums, middleware, accès institutionnel et support des UUID publics.
 
@@ -280,17 +280,17 @@ Toutes les routes métier sont sous `/api/v1`. Les réponses JSON utilisent gén
 
 Codes principaux :
 
-| Code | Signification |
-|---|---|
-| 200 | lecture ou action réussie |
-| 201 | ressource créée |
-| 204 | action réussie sans corps |
-| 401 | absence de session ou signature externe invalide |
-| 403 | compte inactif, rôle ou institution non autorisé |
-| 404 | ressource ou contexte inexistant |
-| 409 | transition d’état impossible |
-| 422 | format ou règle métier invalide |
-| 429 | limite de fréquence dépassée |
+| Code | Signification                                    |
+| ---- | ------------------------------------------------ |
+| 200  | lecture ou action réussie                        |
+| 201  | ressource créée                                  |
+| 204  | action réussie sans corps                        |
+| 401  | absence de session ou signature externe invalide |
+| 403  | compte inactif, rôle ou institution non autorisé |
+| 404  | ressource ou contexte inexistant                 |
+| 409  | transition d’état impossible                     |
+| 422  | format ou règle métier invalide                  |
+| 429  | limite de fréquence dépassée                     |
 
 Les entités exposées utilisent généralement un UUID public. Quelques référentiels internes utilisent encore un entier ; Swagger précise le type attendu pour chaque route. Les dates sont ISO 8601, les jours `AAAA-MM-JJ` et les montants sont stockés en décimal avec une devise séparée.
 

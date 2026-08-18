@@ -6,6 +6,7 @@ use App\Modules\Auth\Controllers\EmailVerificationController;
 use App\Modules\Auth\Controllers\PasswordController;
 use App\Modules\Auth\Controllers\ProfileController;
 use App\Modules\Auth\Controllers\StudentRegistrationController;
+use App\Modules\Auth\Controllers\StudentRegistrationReferenceController;
 use App\Modules\Auth\Controllers\UserAdminController;
 use App\Modules\Auth\Controllers\InstitutionAccountRequestController;
 use App\Modules\Institution\Controllers\InstitutionInvitationRegistrationController;
@@ -18,6 +19,8 @@ Route::prefix('auth')->name('api.v1.auth.')->group(function (): void {
     Route::post('password/reset', [PasswordController::class, 'reset'])->middleware('throttle:password');
     Route::post('student-registration/check', [StudentRegistrationController::class, 'check'])->middleware('throttle:student-registration');
     Route::post('student-registration', [StudentRegistrationController::class, 'register'])->middleware('throttle:student-registration');
+    Route::get('student-registration/universities', [StudentRegistrationReferenceController::class, 'universities'])->middleware('throttle:60,1');
+    Route::get('student-registration/current-academic-year', [StudentRegistrationReferenceController::class, 'currentAcademicYear'])->middleware('throttle:60,1');
     Route::post('institution-registration', [InstitutionAccountRequestController::class, 'store'])->middleware('throttle:5,1');
     Route::get('member-invitations/{token}', [InstitutionInvitationRegistrationController::class, 'show'])->middleware('throttle:10,1');
     Route::post('member-invitations/{token}/register', [InstitutionInvitationRegistrationController::class, 'store'])->middleware('throttle:5,1');

@@ -6,6 +6,7 @@ use App\Modules\Academic\Models\AcademicLevel;
 use App\Modules\Academic\Models\AcademicProgram;
 use App\Modules\Academic\Models\AcademicYear;
 use App\Modules\Academic\Models\Promotion;
+use App\Modules\Academic\Models\Student;
 use App\Modules\Auth\Models\User;
 use App\Modules\Institution\Models\Institution;
 use App\Shared\Enums\InstitutionRole;
@@ -37,8 +38,8 @@ class StudentExcelImportTest extends TestCase
         $this->assertDatabaseHas('students', ['university_id' => $university->id, 'student_number' => 'MED-001']);
         $this->assertDatabaseHas('enrollments', ['promotion_id' => $promotion->id, 'status' => 'ACTIVE']);
 
-        $claim = $this->postJson('/api/v1/auth/student-registration/check', ['university_id' => $university->public_id, 'promotion_id' => $promotion->id, 'academic_year_id' => $year->id, 'student_number' => 'med-001'])->assertOk()->json('data.registration_token');
-        $payload = ['registration_token' => $claim, 'email' => 'student@example.test', 'password' => 'very-secure-password', 'password_confirmation' => 'very-secure-password', 'city' => 'Kinshasa'];
+        $claim = $this->postJson('/api/v1/auth/student-registration/check', ['university_id' => $university->public_id, 'academic_year_id' => $year->id, 'student_number' => 'med-001'])->assertOk()->json('data.registration_token');
+        $payload = ['registration_token' => $claim, 'email' => 'student@example.test', 'password' => 'Secure@123', 'password_confirmation' => 'Secure@123', 'city' => 'Kinshasa'];
         $this->postJson('/api/v1/auth/student-registration', $payload)->assertCreated()->assertJsonPath('data.email', 'student@example.test');
         $this->assertDatabaseHas('users', ['email' => 'student@example.test']);
         $this->assertDatabaseHas('institution_memberships', ['institution_id' => $university->id]);
@@ -57,10 +58,46 @@ class StudentExcelImportTest extends TestCase
 
     public function test_registration_rejects_a_wrong_academic_context(): void
     {
-        [, $university, $year, $promotion] = $this->context();
+        [, , $year] = $this->context();
         $other = Institution::factory()->create(['type' => 'UNIVERSITY']);
-        $this->postJson('/api/v1/auth/student-registration/check', ['university_id' => $other->public_id, 'promotion_id' => $promotion->id, 'academic_year_id' => $year->id, 'student_number' => 'UNKNOWN'])
-            ->assertUnprocessable()->assertJsonValidationErrors('promotion_id');
+        $this->postJson('/api/v1/auth/student-registration/check', ['university_id' => $other->public_id, 'academic_year_id' => $year->id, 'student_number' => 'UNKNOWN'])
+            ->assertUnprocessable()->assertJsonValidationErrors('student_number');
+    }
+
+    public function test_public_references_and_registration_without_contact_details(): void
+    {
+        [, $university, $year, $promotion] = $this->context();
+        $university->update(['status' => 'ACTIVE']);
+        $student = Student::factory()->create([
+            'university_id' => $university->id,
+            'student_number' => 'MAT-2026-001',
+            'last_name' => 'Kabongo',
+            'first_name' => 'Marie',
+            'user_id' => null,
+            'status' => 'ACTIVE',
+        ]);
+        $student->enrollments()->create(['promotion_id' => $promotion->id, 'status' => 'ACTIVE', 'enrolled_at' => now()]);
+
+        $this->getJson('/api/v1/auth/student-registration/universities')
+            ->assertOk()->assertJsonFragment(['id' => $university->public_id, 'name' => $university->name]);
+        $this->getJson('/api/v1/auth/student-registration/current-academic-year')
+            ->assertOk()->assertJsonPath('data.id', $year->id);
+        $token = $this->postJson('/api/v1/auth/student-registration/check', [
+            'university_id' => $university->public_id,
+            'academic_year_id' => $year->id,
+            'student_number' => 'mat-2026-001',
+        ])->assertOk()->assertJsonPath('data.eligible', true)->json('data.registration_token');
+
+        $this->postJson('/api/v1/auth/student-registration', [
+            'registration_token' => $token,
+            'password' => 'Secure@123',
+            'password_confirmation' => 'Secure@123',
+        ])->assertCreated()
+            ->assertJsonPath('data.login_identifier', 'mat-2026-001')
+            ->assertJsonPath('data.email', null);
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'MAT-2026-001', 'password' => 'Secure@123'])
+            ->assertOk()->assertJsonPath('data.user.roles.0', InstitutionRole::Student->value);
     }
 
     private function context(): array

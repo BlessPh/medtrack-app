@@ -4,17 +4,17 @@ Les notifications sont persistées en base avant leur diffusion temps réel. Le 
 
 ## Cas déclencheurs
 
-| Événement | Destinataires | Niveau | Temps réel |
-|---|---|---|---|
-| Ajout à une institution | Membre ajouté | Succès | Oui |
-| Modification du rôle | Membre concerné | Information | Oui |
-| Retrait de l’institution | Membre concerné | Avertissement | Oui |
-| Annonce institutionnelle | Tous les membres actifs | Choisi par l’administrateur | Oui |
-| Admission à un stage | Étudiant concerné | Succès | Oui |
-| Approbation ou refus institutionnel | Demandeur | Information ou avertissement | À conserver et diffuser |
-| Changement de planning ou rotation | Étudiants et superviseurs concernés | Information ou avertissement | À brancher avec le module Planning |
-| Évaluation publiée ou contestée | Étudiant et évaluateurs concernés | Information | À brancher avec le module Évaluation |
-| Paiement confirmé, échoué ou remboursé | Payeur et gestionnaires autorisés | Succès, avertissement ou critique | À brancher avec le module Finance |
+| Événement                              | Destinataires                       | Niveau                            | Temps réel                           |
+| -------------------------------------- | ----------------------------------- | --------------------------------- | ------------------------------------ |
+| Ajout à une institution                | Membre ajouté                       | Succès                            | Oui                                  |
+| Modification du rôle                   | Membre concerné                     | Information                       | Oui                                  |
+| Retrait de l’institution               | Membre concerné                     | Avertissement                     | Oui                                  |
+| Annonce institutionnelle               | Tous les membres actifs             | Choisi par l’administrateur       | Oui                                  |
+| Admission à un stage                   | Étudiant concerné                   | Succès                            | Oui                                  |
+| Approbation ou refus institutionnel    | Demandeur                           | Information ou avertissement      | À conserver et diffuser              |
+| Changement de planning ou rotation     | Étudiants et superviseurs concernés | Information ou avertissement      | À brancher avec le module Planning   |
+| Évaluation publiée ou contestée        | Étudiant et évaluateurs concernés   | Information                       | À brancher avec le module Évaluation |
+| Paiement confirmé, échoué ou remboursé | Payeur et gestionnaires autorisés   | Succès, avertissement ou critique | À brancher avec le module Finance    |
 
 ## Événements volontairement silencieux
 

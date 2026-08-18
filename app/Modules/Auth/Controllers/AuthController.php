@@ -8,6 +8,7 @@ use App\Modules\Auth\Resources\UserResource;
 use App\Shared\Enums\UserStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\JWTGuard;
 
 class AuthController
@@ -16,18 +17,23 @@ class AuthController
     {
         /** @var JWTGuard $guard */
         $guard = auth('api');
-        $token = $guard->attempt($request->safe()->only(['email', 'password']));
+        $rawIdentifier = trim($request->string('email')->toString());
+        $identifier = mb_strtolower($rawIdentifier);
+        $user = User::query()
+            ->whereRaw('LOWER(COALESCE(email, ?)) = ?', ['', $identifier])
+            ->orWhereRaw('LOWER(COALESCE(username, ?)) = ?', ['', $identifier])
+            ->orWhere('phone', $rawIdentifier)
+            ->first();
 
-        if (! $token) {
+        if (! $user || ! Hash::check($request->string('password')->toString(), $user->password)) {
             return response()->json(['message' => 'Identifiants invalides.'], 422);
         }
 
-        $user = $guard->user();
         if ($user->status !== UserStatus::Active) {
-            $guard->logout();
-
             return response()->json(['message' => 'Ce compte n’est pas actif.'], 403);
         }
+
+        $token = $guard->login($user);
 
         $user->forceFill(['last_login_at' => now()])->save();
 
