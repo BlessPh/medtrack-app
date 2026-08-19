@@ -15,7 +15,7 @@ class InstitutionMemberInvitation extends Model
 
     protected function casts(): array
     {
-        return ['expires_at' => 'datetime', 'accepted_at' => 'datetime', 'revoked_at' => 'datetime'];
+        return ['roles' => 'array', 'expires_at' => 'datetime', 'accepted_at' => 'datetime', 'revoked_at' => 'datetime'];
     }
 
     public function institution(): BelongsTo

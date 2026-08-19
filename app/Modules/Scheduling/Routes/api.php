@@ -11,6 +11,7 @@ Route::middleware(['auth:api', 'account.active'])->prefix('scheduling')->group(f
     Route::patch('schedules/{schedule}/cancel', [SchedulingController::class, 'cancel']);
     Route::post('biometric-devices', [SchedulingController::class, 'storeDevice']);
     Route::post('attendance', [SchedulingController::class, 'record']);
+    Route::get('supervisor/attendance', [SchedulingController::class, 'supervisorHistory']);
     Route::post('attendance/{record}/corrections', [SchedulingController::class, 'correction']);
     Route::patch('corrections/{correction}', [SchedulingController::class, 'reviewCorrection']);
     Route::get('students/{student:public_id}/attendance-summary', [SchedulingController::class, 'summary']);

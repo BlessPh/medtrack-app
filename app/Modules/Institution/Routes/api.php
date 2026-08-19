@@ -7,6 +7,7 @@ use App\Modules\Media\Controllers\InstitutionLogoController;
 use App\Modules\Institution\Controllers\InstitutionInvitationController;
 use App\Modules\Notification\Controllers\InstitutionNotificationController;
 use App\Modules\Institution\Controllers\HospitalSupervisorController;
+use App\Modules\Institution\Controllers\InstitutionGovernanceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('institutions/health', fn () => ['data' => ['status' => 'ok']]);
@@ -34,6 +35,8 @@ Route::middleware(['auth:api', 'account.active'])->prefix('institutions')->name(
     Route::get('{institution:public_id}/supervisors', [HospitalSupervisorController::class, 'index']);
     Route::put('{institution:public_id}/supervisors/{user:public_id}', [HospitalSupervisorController::class, 'update'])->withoutScopedBindings();
     Route::post('{institution:public_id}/notifications', [InstitutionNotificationController::class, 'store']);
+    Route::get('{institution:public_id}/audit-logs', [InstitutionGovernanceController::class, 'auditLogs']);
+    Route::get('{institution:public_id}/oversight', [InstitutionGovernanceController::class, 'oversight']);
     Route::get('{institution:public_id}/logo', [InstitutionLogoController::class, 'show'])->name('logo.show');
     Route::post('{institution:public_id}/logo', [InstitutionLogoController::class, 'store']);
     Route::delete('{institution:public_id}/logo', [InstitutionLogoController::class, 'destroy']);

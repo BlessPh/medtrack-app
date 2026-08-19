@@ -14,9 +14,57 @@ use App\Shared\Enums\InstitutionRole;
 use App\Shared\Services\InstitutionAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AdmissionController
 {
+    public function hospitalApplications(Request $request, InstitutionAccess $access): JsonResponse
+    {
+        $data = $request->validate(['hospital_id' => ['required', 'uuid'], 'status' => ['nullable', 'string']]);
+        $hospital = Institution::where('public_id', $data['hospital_id'])->where('type', 'HOSPITAL')->firstOrFail();
+        abort_unless($access->has($request->user(), $hospital->id, [InstitutionRole::HospitalManager->value]), 403);
+        $query = Application::query()->where('preferred_hospital_id', $hospital->id)
+            ->whereHas('campaign', fn ($query) => $query->where('strategy', 'STANDARD'))
+            ->with(['student.user.profile', 'student.university', 'campaign.academicYear', 'assignedService', 'admission']);
+        $query->when($data['status'] ?? null, fn ($query, $status) => $query->where('status', $status));
+
+        return response()->json(['data' => $query->latest('submitted_at')->paginate(min($request->integer('per_page', 25), 100))]);
+    }
+
+    public function hospitalDecision(Request $request, Application $application, InstitutionAccess $access): JsonResponse
+    {
+        abort_unless($application->preferred_hospital_id && $access->has($request->user(), $application->preferred_hospital_id, [InstitutionRole::HospitalManager->value]), 403);
+        abort_unless($application->campaign->strategy === 'STANDARD', 409, 'Utilisez le workflow D4 pour cette candidature.');
+        $data = $request->validate([
+            'decision' => ['required', Rule::in(['PENDING', 'ACCEPTED', 'REJECTED'])],
+            'service_id' => ['nullable', 'integer'],
+            'starts_on' => ['nullable', 'required_if:decision,ACCEPTED', 'date'],
+            'ends_on' => ['nullable', 'required_if:decision,ACCEPTED', 'date', 'after_or_equal:starts_on'],
+            'internal_note' => ['nullable', 'string', 'max:3000'],
+        ]);
+        if (isset($data['service_id'])) {
+            abort_unless(DB::table('institution_units')->where('id', $data['service_id'])->where('institution_id', $application->preferred_hospital_id)->where('type', 'SERVICE')->where('status', 'ACTIVE')->exists(), 422, 'Service hospitalier invalide.');
+        }
+        abort_if(in_array($application->status, ['WITHDRAWN', 'CANCELLED'], true), 409, 'Cette candidature n’est plus active.');
+        $application->update([
+            'status' => $data['decision'] === 'PENDING' ? 'UNDER_REVIEW' : $data['decision'],
+            'assigned_service_id' => $data['service_id'] ?? null,
+            'proposed_starts_on' => $data['starts_on'] ?? null,
+            'proposed_ends_on' => $data['ends_on'] ?? null,
+            'internal_note' => $data['internal_note'] ?? null,
+            'reviewed_at' => $data['decision'] === 'PENDING' ? null : now(),
+            'reviewed_by' => $request->user()->id,
+        ]);
+        if ($data['decision'] === 'ACCEPTED') {
+            \App\Modules\Admission\Models\Admission::firstOrCreate(
+                ['application_id' => $application->id],
+                ['student_id' => $application->student_id, 'hospital_id' => $application->preferred_hospital_id, 'status' => 'ACCEPTED', 'admitted_at' => now()],
+            );
+        }
+
+        return response()->json(['data' => $application->fresh()->load(['student.user', 'campaign', 'assignedService', 'admission'])]);
+    }
     public function store(Request $request, EligibilityService $eligibility): JsonResponse
     {
         $data = $request->validate(['campaign_id' => ['required', 'uuid', 'exists:campaigns,public_id'], 'preferred_hospital_id' => ['nullable', 'uuid', 'exists:institutions,public_id'], 'motivation' => ['nullable', 'string', 'max:3000']]);

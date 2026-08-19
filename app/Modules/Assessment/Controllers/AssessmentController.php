@@ -16,6 +16,16 @@ use Illuminate\Http\Request;
 
 class AssessmentController
 {
+    public function supervisorIndex(Request $request): JsonResponse
+    {
+        $data = $request->validate(['hospital_id' => ['required', 'uuid']]);
+        $hospital = Institution::where('public_id', $data['hospital_id'])->where('type', 'HOSPITAL')->firstOrFail();
+        abort_unless(app(InstitutionAccess::class)->has($request->user(), $hospital->id, [InstitutionRole::Supervisor->value]), 403);
+        $evaluations = Evaluation::where('evaluator_id', $request->user()->id)->whereHas('rotation.internship', fn ($query) => $query->where('hospital_id', $hospital->id))->with(['rotation.internship.student.user'])->latest()->get();
+        $templates = EvaluationTemplate::where('institution_id', $hospital->id)->where('status', 'ACTIVE')->orderBy('name')->get();
+        return response()->json(['data' => ['evaluations' => $evaluations, 'templates' => $templates]]);
+    }
+
     public function storeTemplate(Request $request): JsonResponse
     {
         $data = $request->validate(['institution_id' => ['required', 'uuid', 'exists:institutions,public_id'], 'name' => ['required', 'string', 'max:200'], 'criteria' => ['required', 'array', 'min:1'], 'criteria.*.key' => ['required', 'string'], 'criteria.*.maximum' => ['required', 'numeric', 'gt:0']]);
@@ -29,7 +39,7 @@ class AssessmentController
 
     public function store(Request $request): JsonResponse
     {
-        $data = $request->validate(['rotation_id' => ['required', 'integer', 'exists:rotations,id'], 'template_id' => ['required', 'integer', 'exists:evaluation_templates,id'], 'answers' => ['required', 'array']]);
+        $data = $request->validate(['rotation_id' => ['required', 'integer', 'exists:rotations,id'], 'template_id' => ['required', 'integer', 'exists:evaluation_templates,id'], 'answers' => ['required', 'array'], 'comments' => ['nullable', 'string', 'max:3000']]);
         $rotation = Rotation::findOrFail($data['rotation_id']);
         abort_unless($rotation->supervisor_id === $request->user()->id || $rotation->internship->supervisor_id === $request->user()->id, 403);
         $template = EvaluationTemplate::findOrFail($data['template_id']);
@@ -40,7 +50,9 @@ class AssessmentController
             abort_unless($criteria->has($key) && is_numeric($value) && $value >= 0 && $value <= $criteria[$key]['maximum'], 422, 'Score invalide.');
             $score += $value;
         }
-        $evaluation = Evaluation::create(['rotation_id' => $rotation->id, 'template_id' => $template->id, 'student_id' => $rotation->internship->student_id, 'evaluator_id' => $request->user()->id, 'answers' => $data['answers'], 'score' => $score, 'status' => 'DRAFT']);
+        $evaluation = Evaluation::where('rotation_id', $rotation->id)->where('evaluator_id', $request->user()->id)->first();
+        abort_if($evaluation?->status === 'FINALIZED', 409, 'Une évaluation soumise ne peut plus être modifiée.');
+        $evaluation = Evaluation::updateOrCreate(['rotation_id' => $rotation->id, 'evaluator_id' => $request->user()->id], ['template_id' => $template->id, 'student_id' => $rotation->internship->student_id, 'answers' => $data['answers'], 'comments' => $data['comments'] ?? null, 'score' => $score, 'status' => 'DRAFT']);
 
         return response()->json(['data' => $evaluation], 201);
     }

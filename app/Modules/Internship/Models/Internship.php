@@ -28,4 +28,24 @@ class Internship extends Model
     {
         return $this->hasMany(Rotation::class);
     }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Academic\Models\Student::class);
+    }
+
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Auth\Models\User::class, 'supervisor_id');
+    }
+
+    public function pathTemplate(): BelongsTo
+    {
+        return $this->belongsTo(PathTemplate::class);
+    }
+
+    public function observations(): HasMany
+    {
+        return $this->hasMany(SupervisorObservation::class);
+    }
 }

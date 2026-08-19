@@ -12,6 +12,7 @@ use App\Modules\Admission\Services\AdmissionService;
 use App\Modules\Assessment\Models\EvaluationTemplate;
 use App\Modules\Auth\Models\User;
 use App\Modules\Institution\Models\Institution;
+use App\Modules\Institution\Models\InstitutionUnit;
 use App\Modules\Internship\Models\Internship;
 use App\Modules\Internship\Models\Rotation;
 use App\Modules\Notification\Notifications\AdmissionCreatedNotification;
@@ -45,6 +46,8 @@ class InternshipJourneyTest extends TestCase
         $manager = User::factory()->create();
         $this->assignInstitutionRole($manager, $hospital, InstitutionRole::HospitalManager->value);
 
+        $this->actingAs($manager)->getJson("/api/v1/internships/templates?hospital_id={$hospital->public_id}")->assertOk();
+
         $internshipId = $this->actingAs($manager)->postJson('/api/v1/internships', ['admission_id' => $admission->public_id, 'starts_on' => '2026-09-01'])->assertCreated()->json('data.public_id');
         $rotationId = $this->postJson("/api/v1/internships/{$internshipId}/rotations", ['starts_on' => '2026-09-01', 'ends_on' => '2026-09-30'])->assertCreated()->json('data.id');
         $scheduleId = $this->postJson('/api/v1/scheduling/schedules', ['internship_id' => $internshipId, 'name' => 'Septembre', 'starts_on' => '2026-09-01', 'ends_on' => '2026-09-30'])->assertCreated()->json('data.id');
@@ -52,6 +55,40 @@ class InternshipJourneyTest extends TestCase
         $this->patchJson("/api/v1/scheduling/schedules/{$scheduleId}/publish")->assertOk();
         $this->postJson('/api/v1/scheduling/attendance', ['student_id' => $application->student->public_id, 'schedule_entry_id' => $entryId, 'type' => 'CHECK_IN', 'recorded_at' => '2026-08-02 08:01:00', 'source' => 'MANUAL'])->assertCreated();
         $this->assertDatabaseHas('rotations', ['id' => $rotationId, 'status' => 'PLANNED']);
+        $this->getJson("/api/v1/internships/monitoring?hospital_id={$hospital->public_id}")
+            ->assertOk()->assertJsonPath('data.0.check_ins', 1)->assertJsonPath('data.0.evaluations_total', 0);
+    }
+
+    public function test_hospital_manager_can_review_only_standard_applications_for_own_hospital(): void
+    {
+        [$application, , $hospital] = $this->admissionContext();
+        $application->update(['preferred_hospital_id' => $hospital->id]);
+        $service = InstitutionUnit::create(['institution_id' => $hospital->id, 'type' => 'SERVICE', 'name' => 'Pédiatrie', 'code' => 'PED', 'status' => 'ACTIVE']);
+        $manager = User::factory()->create();
+        $this->assignInstitutionRole($manager, $hospital, InstitutionRole::HospitalManager->value);
+
+        $this->actingAs($manager)->getJson("/api/v1/admissions/hospital-applications?hospital_id={$hospital->public_id}")
+            ->assertOk()->assertJsonCount(1, 'data.data');
+        $this->patchJson("/api/v1/admissions/applications/{$application->public_id}/hospital-decision", [
+            'decision' => 'ACCEPTED', 'service_id' => $service->id,
+            'starts_on' => '2026-09-01', 'ends_on' => '2026-09-30', 'internal_note' => 'Dossier complet.',
+        ])->assertOk()->assertJsonPath('data.status', 'ACCEPTED');
+
+        $this->assertDatabaseHas('admissions', ['application_id' => $application->id, 'hospital_id' => $hospital->id]);
+        $this->assertDatabaseHas('applications', ['id' => $application->id, 'assigned_service_id' => $service->id, 'internal_note' => 'Dossier complet.']);
+    }
+
+    public function test_hospital_manager_cannot_review_another_hospitals_application(): void
+    {
+        [$application, , $hospital] = $this->admissionContext();
+        $application->update(['preferred_hospital_id' => $hospital->id]);
+        $otherHospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $manager = User::factory()->create();
+        $this->assignInstitutionRole($manager, $otherHospital, InstitutionRole::HospitalManager->value);
+
+        $this->actingAs($manager)->patchJson("/api/v1/admissions/applications/{$application->public_id}/hospital-decision", [
+            'decision' => 'REJECTED', 'internal_note' => 'Hors périmètre.',
+        ])->assertForbidden();
     }
 
     public function test_supervisor_can_score_and_finalize_once(): void
@@ -66,6 +103,27 @@ class InternshipJourneyTest extends TestCase
         $evaluationId = $this->actingAs($supervisor)->postJson('/api/v1/assessments/evaluations', ['rotation_id' => $rotation->id, 'template_id' => $template->id, 'answers' => ['practice' => 50, 'conduct' => 35]])->assertCreated()->assertJsonPath('data.score', '85.00')->json('data.public_id');
         $this->patchJson("/api/v1/assessments/evaluations/{$evaluationId}/submit")->assertOk()->assertJsonPath('data.status', 'FINALIZED');
         $this->patchJson("/api/v1/assessments/evaluations/{$evaluationId}/submit")->assertStatus(409);
+    }
+
+    public function test_supervisor_dashboard_is_personal_and_observations_are_scoped(): void
+    {
+        [$application, $pool, $hospital] = $this->admissionContext();
+        $admission = app(AdmissionService::class)->accept($application, $pool);
+        $supervisor = User::factory()->create();
+        $otherSupervisor = User::factory()->create();
+        $this->assignInstitutionRole($supervisor, $hospital, InstitutionRole::Supervisor->value);
+        $this->assignInstitutionRole($otherSupervisor, $hospital, InstitutionRole::Supervisor->value);
+        $internship = Internship::create(['admission_id' => $admission->id, 'student_id' => $admission->student_id, 'hospital_id' => $hospital->id, 'supervisor_id' => $supervisor->id, 'starts_on' => '2026-09-01', 'status' => 'ACTIVE']);
+
+        $this->actingAs($supervisor)->getJson("/api/v1/internships/supervisor/dashboard?hospital_id={$hospital->public_id}")
+            ->assertOk()->assertJsonPath('data.statistics.students', 1)->assertJsonCount(1, 'data.internships');
+        $this->postJson("/api/v1/internships/{$internship->public_id}/supervisor-observations", ['content' => 'Progression satisfaisante.'])
+            ->assertCreated();
+        $this->patchJson("/api/v1/internships/supervisor/availability?hospital_id={$hospital->public_id}", ['availability_status' => 'LIMITED', 'availability_note' => 'Disponible le matin.', 'stages_enabled' => true])
+            ->assertOk()->assertJsonPath('data.availability_status', 'LIMITED');
+
+        $this->actingAs($otherSupervisor)->postJson("/api/v1/internships/{$internship->public_id}/supervisor-observations", ['content' => 'Accès interdit.'])
+            ->assertForbidden();
     }
 
     private function admissionContext(): array

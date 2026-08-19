@@ -2648,6 +2648,93 @@
                 }
             }
         },
+        "/api/v1/admissions/applications/{application}/hospital-decision": {
+            "patch": {
+                "tags": [
+                    "Admissions"
+                ],
+                "summary": "Mettre à jour admissions/applications/application/hospital decision",
+                "operationId": "patchAdmissionsApplicationsApplicationHospitalDecision",
+                "parameters": [
+                    {
+                        "name": "application",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "decision": {
+                                        "type": "string",
+                                        "enum": [
+                                            "PENDING",
+                                            "ACCEPTED",
+                                            "REJECTED"
+                                        ]
+                                    },
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "starts_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "ends_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "internal_note": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "decision"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admissions/applications/{application}/reject": {
             "patch": {
                 "tags": [
@@ -2839,6 +2926,37 @@
                 }
             }
         },
+        "/api/v1/admissions/hospital-applications": {
+            "get": {
+                "tags": [
+                    "Admissions"
+                ],
+                "summary": "Consulter admissions/hospital applications",
+                "operationId": "getAdmissionsHospitalApplications",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/assessments/disputes/{dispute}": {
             "patch": {
                 "tags": [
@@ -2954,6 +3072,10 @@
                                     "answers": {
                                         "type": "object",
                                         "additionalProperties": true
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "example": null
                                     }
                                 },
                                 "required": [
@@ -3172,6 +3294,37 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/assessments/supervisor": {
+            "get": {
+                "tags": [
+                    "Évaluations"
+                ],
+                "summary": "Consulter assessments/supervisor",
+                "operationId": "getAssessmentsSupervisor",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/assessments/templates": {
@@ -6018,6 +6171,52 @@
                 }
             }
         },
+        "/api/v1/institutions/{institution}/audit-logs": {
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/audit logs",
+                "operationId": "getInstitutionsInstitutionAuditLogs",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/institutions/{institution}/contacts": {
             "post": {
                 "tags": [
@@ -6502,21 +6701,16 @@
                                         "type": "string",
                                         "format": "email"
                                     },
-                                    "role": {
-                                        "type": "string",
-                                        "enum": [
-                                            "INSTITUTION_ADMIN",
-                                            "ACADEMIC_MANAGER",
-                                            "HOSPITAL_MANAGER",
-                                            "SUPERVISOR",
-                                            "FINANCE_OFFICER",
-                                            "MEMBER"
-                                        ]
+                                    "roles": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/InstitutionRole"
+                                        }
                                     }
                                 },
                                 "required": [
                                     "email",
-                                    "role"
+                                    "roles"
                                 ]
                             }
                         }
@@ -6641,21 +6835,16 @@
                                         "type": "string",
                                         "format": "email"
                                     },
-                                    "role": {
-                                        "type": "string",
-                                        "enum": [
-                                            "INSTITUTION_ADMIN",
-                                            "ACADEMIC_MANAGER",
-                                            "HOSPITAL_MANAGER",
-                                            "SUPERVISOR",
-                                            "FINANCE_OFFICER",
-                                            "MEMBER"
-                                        ]
+                                    "roles": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/InstitutionRole"
+                                        }
                                     }
                                 },
                                 "required": [
                                     "email",
-                                    "role"
+                                    "roles"
                                 ]
                             }
                         }
@@ -6771,20 +6960,15 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "role": {
-                                        "type": "string",
-                                        "enum": [
-                                            "INSTITUTION_ADMIN",
-                                            "ACADEMIC_MANAGER",
-                                            "HOSPITAL_MANAGER",
-                                            "SUPERVISOR",
-                                            "FINANCE_OFFICER",
-                                            "MEMBER"
-                                        ]
+                                    "roles": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/InstitutionRole"
+                                        }
                                     }
                                 },
                                 "required": [
-                                    "role"
+                                    "roles"
                                 ]
                             }
                         }
@@ -7018,6 +7202,52 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/institutions/{institution}/oversight": {
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/oversight",
+                "operationId": "getInstitutionsInstitutionOversight",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/institutions/{institution}/status": {
@@ -7485,6 +7715,35 @@
             }
         },
         "/api/v1/internships": {
+            "get": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Consulter internships",
+                "operationId": "getInternships",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Stages"
@@ -7549,6 +7808,37 @@
                 }
             }
         },
+        "/api/v1/internships/dashboard": {
+            "get": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Consulter internships/dashboard",
+                "operationId": "getInternshipsDashboard",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/internships/health": {
             "get": {
                 "tags": [
@@ -7561,6 +7851,37 @@
                         "$ref": "#/components/responses/Success"
                     }
                 }
+            }
+        },
+        "/api/v1/internships/monitoring": {
+            "get": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Consulter internships/monitoring",
+                "operationId": "getInternshipsMonitoring",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/internships/rotations/{rotation}/extensions": {
@@ -7706,7 +8027,132 @@
                 }
             }
         },
+        "/api/v1/internships/supervisor/availability": {
+            "patch": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Mettre à jour internships/supervisor/availability",
+                "operationId": "patchInternshipsSupervisorAvailability",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "availability_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "AVAILABLE",
+                                            "LIMITED",
+                                            "UNAVAILABLE"
+                                        ]
+                                    },
+                                    "availability_note": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "stages_enabled": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "availability_status",
+                                    "stages_enabled"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internships/supervisor/dashboard": {
+            "get": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Consulter internships/supervisor/dashboard",
+                "operationId": "getInternshipsSupervisorDashboard",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/internships/templates": {
+            "get": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Consulter internships/templates",
+                "operationId": "getInternshipsTemplates",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Stages"
@@ -7759,6 +8205,167 @@
                                 "required": [
                                     "name",
                                     "steps"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internships/{internship}": {
+            "put": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Remplacer internships/internship",
+                "operationId": "putInternshipsInternship",
+                "parameters": [
+                    {
+                        "name": "internship",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "supervisor_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "path_template_id": {
+                                        "type": "integer"
+                                    },
+                                    "starts_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "ends_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "required": [
+                                    "starts_on"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internships/{internship}/notifications": {
+            "post": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Créer ou déclencher internships/internship/notifications",
+                "operationId": "postInternshipsInternshipNotifications",
+                "parameters": [
+                    {
+                        "name": "internship",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "recipients": {
+                                        "type": "string",
+                                        "enum": [
+                                            "STUDENT",
+                                            "SUPERVISOR",
+                                            "BOTH"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "message",
+                                    "recipients"
                                 ]
                             }
                         }
@@ -7910,6 +8517,74 @@
                                 },
                                 "required": [
                                     "status"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/internships/{internship}/supervisor-observations": {
+            "post": {
+                "tags": [
+                    "Stages"
+                ],
+                "summary": "Créer ou déclencher internships/internship/supervisor observations",
+                "operationId": "postInternshipsInternshipSupervisorObservations",
+                "parameters": [
+                    {
+                        "name": "internship",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "content"
                                 ]
                             }
                         }
@@ -8284,7 +8959,9 @@
                                         "type": "string",
                                         "enum": [
                                             "CHECK_IN",
-                                            "CHECK_OUT"
+                                            "CHECK_OUT",
+                                            "ABSENCE",
+                                            "LATE"
                                         ]
                                     },
                                     "recorded_at": {
@@ -8299,6 +8976,10 @@
                                         ]
                                     },
                                     "device_code": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "notes": {
                                         "type": "string",
                                         "example": null
                                     }
@@ -8818,6 +9499,37 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/scheduling/supervisor/attendance": {
+            "get": {
+                "tags": [
+                    "Planning et présences"
+                ],
+                "summary": "Consulter scheduling/supervisor/attendance",
+                "operationId": "getSchedulingSupervisorAttendance",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"

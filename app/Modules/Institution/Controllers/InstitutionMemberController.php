@@ -32,15 +32,18 @@ class InstitutionMemberController
     public function store(Request $request, Institution $institution, InstitutionAccess $access, InstitutionAudit $audit): JsonResponse
     {
         $request->user()->can('manageMembers', $institution) || abort(403);
-        $data = $request->validate(['email' => ['required', 'email:rfc', 'exists:users,email'], 'role' => ['required', Rule::in($this->rolesFor($institution))]]);
+        $data = $request->validate(['email' => ['required', 'email:rfc', 'exists:users,email'], 'roles' => ['nullable', 'required_without:role', 'array', 'min:1'], 'roles.*' => ['string', 'distinct', Rule::in($this->rolesFor($institution))], 'role' => ['nullable', 'required_without:roles', Rule::in($this->rolesFor($institution))]]);
+        $data['roles'] = $data['roles'] ?? [$data['role']];
         $user = User::where('email', mb_strtolower($data['email']))->firstOrFail();
         $institution->members()->syncWithoutDetaching([$user->id => ['status' => 'ACTIVE', 'suspended_at' => null, 'suspended_by' => null, 'suspension_reason' => null]]);
-        $access->assign($user, $institution->id, $data['role']);
-        $audit->record($request, $institution, 'MEMBER_ATTACHED', 'user', $user->public_id, null, ['role' => $data['role']]);
-        if ($data['role'] !== InstitutionRole::Supervisor->value) {
+        foreach ($data['roles'] as $role) {
+            $access->assign($user, $institution->id, $role);
+        }
+        $audit->record($request, $institution, 'MEMBER_ATTACHED', 'user', $user->public_id, null, ['roles' => $data['roles']]);
+        if (! in_array(InstitutionRole::Supervisor->value, $access->rolesFor($user, $institution->id), true)) {
             HospitalSupervisorProfile::query()->where('institution_id', $institution->id)->where('user_id', $user->id)->delete();
         }
-        $user->notify(new InstitutionNotification($institution->public_id, $institution->name, 'Ajout à une institution', "Vous avez été ajouté à {$institution->name} avec le rôle {$data['role']}.", 'MEMBERSHIP', 'SUCCESS'));
+        $user->notify(new InstitutionNotification($institution->public_id, $institution->name, 'Ajout à une institution', "Vous avez été ajouté à {$institution->name} avec plusieurs responsabilités.", 'MEMBERSHIP', 'SUCCESS'));
 
         return response()->json(['message' => 'Membre ajouté.'], 201);
     }
@@ -49,14 +52,15 @@ class InstitutionMemberController
     {
         $request->user()->can('manageMembers', $institution) || abort(403);
         abort_unless($institution->members()->whereKey($user->id)->exists(), 404);
-        $data = $request->validate(['role' => ['required', Rule::in($this->rolesFor($institution))]]);
+        $data = $request->validate(['roles' => ['nullable', 'required_without:role', 'array', 'min:1'], 'roles.*' => ['string', 'distinct', Rule::in($this->rolesFor($institution))], 'role' => ['nullable', 'required_without:roles', Rule::in($this->rolesFor($institution))]]);
+        $data['roles'] = $data['roles'] ?? [$data['role']];
         $beforeRoles = $access->rolesFor($user, $institution->id);
-        $access->assign($user, $institution->id, $data['role']);
-        $audit->record($request, $institution, 'MEMBER_ROLE_CHANGED', 'user', $user->public_id, ['roles' => $beforeRoles], ['role' => $data['role']]);
-        if ($data['role'] !== InstitutionRole::Supervisor->value) {
+        $access->sync($user, $institution->id, $data['roles']);
+        $audit->record($request, $institution, 'MEMBER_ROLES_CHANGED', 'user', $user->public_id, ['roles' => $beforeRoles], ['roles' => $data['roles']]);
+        if (! in_array(InstitutionRole::Supervisor->value, $data['roles'], true)) {
             HospitalSupervisorProfile::query()->where('institution_id', $institution->id)->where('user_id', $user->id)->delete();
         }
-        $user->notify(new InstitutionNotification($institution->public_id, $institution->name, 'Rôle institutionnel modifié', "Votre rôle au sein de {$institution->name} est désormais {$data['role']}.", 'MEMBERSHIP', 'INFO'));
+        $user->notify(new InstitutionNotification($institution->public_id, $institution->name, 'Rôles institutionnels modifiés', "Vos responsabilités au sein de {$institution->name} ont été mises à jour.", 'MEMBERSHIP', 'INFO'));
 
         return response()->json(['message' => 'Rôle du membre mis à jour.']);
     }

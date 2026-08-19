@@ -67,7 +67,7 @@ class SchedulingController
 
     public function record(Request $request): JsonResponse
     {
-        $data = $request->validate(['student_id' => ['required', 'uuid', 'exists:students,public_id'], 'schedule_entry_id' => ['nullable', 'integer', 'exists:schedule_entries,id'], 'type' => ['required', 'in:CHECK_IN,CHECK_OUT'], 'recorded_at' => ['required', 'date', 'before_or_equal:now'], 'source' => ['required', 'in:MANUAL,BIOMETRIC'], 'device_code' => ['required_if:source,BIOMETRIC', 'nullable', 'string']]);
+        $data = $request->validate(['student_id' => ['required', 'uuid', 'exists:students,public_id'], 'schedule_entry_id' => ['nullable', 'required_if:source,MANUAL', 'integer', 'exists:schedule_entries,id'], 'type' => ['required', 'in:CHECK_IN,CHECK_OUT,ABSENCE,LATE'], 'recorded_at' => ['required', 'date', 'before_or_equal:now'], 'source' => ['required', 'in:MANUAL,BIOMETRIC'], 'device_code' => ['required_if:source,BIOMETRIC', 'nullable', 'string'], 'notes' => ['nullable', 'string', 'max:1000']]);
         $student = Student::where('public_id', $data['student_id'])->firstOrFail();
         $device = null;
         if ($data['source'] === 'BIOMETRIC') {
@@ -77,11 +77,24 @@ class SchedulingController
         } else {
             $entry = ScheduleEntry::findOrFail($data['schedule_entry_id']);
             $this->manage($request, $entry->schedule->internship->hospital_id);
+            if (! app(InstitutionAccess::class)->has($request->user(), $entry->schedule->internship->hospital_id, [InstitutionRole::HospitalManager->value])) {
+                abort_unless($entry->schedule->internship->supervisor_id === $request->user()->id, 403);
+            }
         }
         abort_if(AttendanceRecord::where('student_id', $student->id)->where('type', $data['type'])->where('recorded_at', $data['recorded_at'])->exists(), 422, 'Pointage déjà enregistré.');
-        $record = AttendanceRecord::create(['student_id' => $student->id, 'schedule_entry_id' => $data['schedule_entry_id'] ?? null, 'biometric_device_id' => $device?->id, 'type' => $data['type'], 'recorded_at' => $data['recorded_at'], 'source' => $data['source'], 'status' => 'VALID', 'recorded_by' => $request->user()->id]);
+        $record = AttendanceRecord::create(['student_id' => $student->id, 'schedule_entry_id' => $data['schedule_entry_id'] ?? null, 'biometric_device_id' => $device?->id, 'type' => $data['type'], 'recorded_at' => $data['recorded_at'], 'source' => $data['source'], 'status' => 'VALID', 'notes' => $data['notes'] ?? null, 'recorded_by' => $request->user()->id]);
 
         return response()->json(['data' => $record], 201);
+    }
+
+    public function supervisorHistory(Request $request): JsonResponse
+    {
+        $data = $request->validate(['hospital_id' => ['required', 'uuid']]);
+        $hospital = Institution::where('public_id', $data['hospital_id'])->where('type', 'HOSPITAL')->firstOrFail();
+        abort_unless(app(InstitutionAccess::class)->has($request->user(), $hospital->id, [InstitutionRole::Supervisor->value]), 403);
+        $records = AttendanceRecord::whereHas('scheduleEntry.schedule.internship', fn ($query) => $query->where('hospital_id', $hospital->id)->where('supervisor_id', $request->user()->id))
+            ->with(['student.user', 'scheduleEntry.schedule'])->latest('recorded_at')->paginate(min($request->integer('per_page', 50), 100));
+        return response()->json(['data' => $records]);
     }
 
     public function correction(Request $request, AttendanceRecord $record): JsonResponse

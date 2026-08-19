@@ -34,4 +34,9 @@ class Application extends Model
     {
         return $this->hasOne(Admission::class);
     }
+
+    public function assignedService(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Institution\Models\InstitutionUnit::class, 'assigned_service_id');
+    }
 }

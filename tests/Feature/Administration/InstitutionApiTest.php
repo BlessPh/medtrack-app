@@ -209,6 +209,33 @@ class InstitutionApiTest extends TestCase
         $this->assertDatabaseHas('notifications', ['notifiable_id' => $member->id]);
     }
 
+    public function test_member_can_hold_multiple_institution_roles_and_student_role_is_exclusive(): void
+    {
+        $admin = User::factory()->create();
+        $member = User::factory()->create(['email' => 'multi.role@medtrack.test']);
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+
+        $this->actingAs($admin)->postJson("/api/v1/institutions/{$hospital->public_id}/members", [
+            'email' => $member->email,
+            'roles' => [InstitutionRole::Admin->value, InstitutionRole::HospitalManager->value],
+        ])->assertCreated();
+        $this->assertEqualsCanonicalizing(
+            [InstitutionRole::Admin->value, InstitutionRole::HospitalManager->value],
+            app(InstitutionAccess::class)->rolesFor($member, $hospital->id),
+        );
+        $this->putJson("/api/v1/institutions/{$hospital->public_id}/members/{$member->public_id}", [
+            'roles' => [InstitutionRole::HospitalManager->value],
+        ])->assertOk();
+        $this->assertSame([InstitutionRole::HospitalManager->value], app(InstitutionAccess::class)->rolesFor($member, $hospital->id));
+
+        $student = User::factory()->create();
+        $this->assignInstitutionRole($student, $hospital, InstitutionRole::Student->value);
+        $this->actingAs($admin)->postJson("/api/v1/institutions/{$hospital->public_id}/members", [
+            'email' => $student->email, 'roles' => [InstitutionRole::Member->value],
+        ])->assertUnprocessable()->assertJsonValidationErrors('roles');
+    }
+
     public function test_approved_admin_uses_request_type_when_creating_own_institution(): void
     {
         $user = User::factory()->create();
@@ -291,6 +318,22 @@ class InstitutionApiTest extends TestCase
         $this->getJson("/api/v1/institutions/{$otherHospital->public_id}/supervisors")->assertForbidden();
     }
 
+    public function test_hospital_manager_reads_supervisors_but_needs_admin_role_to_modify_them(): void
+    {
+        $manager = User::factory()->create();
+        $supervisor = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($manager, $hospital, InstitutionRole::HospitalManager->value);
+        $this->assignInstitutionRole($supervisor, $hospital, InstitutionRole::Supervisor->value);
+
+        $payload = ['service_ids' => [], 'availability_status' => 'AVAILABLE', 'availability_note' => null, 'stages_enabled' => true];
+        $this->actingAs($manager)->getJson("/api/v1/institutions/{$hospital->public_id}/supervisors")->assertOk();
+        $this->putJson("/api/v1/institutions/{$hospital->public_id}/supervisors/{$supervisor->public_id}", $payload)->assertForbidden();
+
+        app(InstitutionAccess::class)->assign($manager, $hospital->id, InstitutionRole::Admin->value);
+        $this->putJson("/api/v1/institutions/{$hospital->public_id}/supervisors/{$supervisor->public_id}", $payload)->assertOk();
+    }
+
     public function test_hospital_admin_cannot_remove_self_and_role_change_cleans_supervisor_profile(): void
     {
         $admin = User::factory()->create();
@@ -370,5 +413,21 @@ class InstitutionApiTest extends TestCase
         $this->actingAs($member)->getJson("/api/v1/institutions/{$hospital->public_id}")->assertOk();
         $this->assertDatabaseHas('institution_audit_logs', ['action' => 'MEMBER_SUSPENDED', 'subject_id' => $member->public_id]);
         $this->assertDatabaseHas('institution_audit_logs', ['action' => 'MEMBER_REACTIVATED', 'subject_id' => $member->public_id]);
+    }
+
+    public function test_hospital_admin_has_read_only_scoped_governance_views(): void
+    {
+        $admin = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $otherHospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+
+        $this->actingAs($admin)->getJson("/api/v1/institutions/{$hospital->public_id}/oversight")
+            ->assertOk()->assertJsonStructure(['data' => ['internships', 'd4_requests', 'finance', 'security' => ['active_admins', 'active_members', 'suspended_members', 'institution_status', 'status_managed_by_super_admin']]])
+            ->assertJsonPath('data.security.active_admins', 1);
+        $this->getJson("/api/v1/institutions/{$hospital->public_id}/audit-logs")
+            ->assertOk()->assertJsonStructure(['data' => ['data', 'current_page', 'total']]);
+        $this->getJson("/api/v1/institutions/{$otherHospital->public_id}/oversight")->assertForbidden();
+        $this->patchJson("/api/v1/institutions/{$hospital->public_id}/status", ['status' => 'SUSPENDED'])->assertForbidden();
     }
 }

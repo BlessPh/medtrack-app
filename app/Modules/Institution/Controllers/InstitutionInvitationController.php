@@ -20,7 +20,7 @@ class InstitutionInvitationController
     {
         $request->user()->can('manageMembers', $institution) || abort(403);
         $items = $institution->invitations()->with('inviter:id,name')->latest()->get()->map(fn ($item) => [
-            'id' => $item->public_id, 'email' => $item->email, 'role' => $item->role,
+            'id' => $item->public_id, 'email' => $item->email, 'roles' => $item->roles ?: [$item->role],
             'status' => $item->accepted_at ? 'ACCEPTED' : ($item->revoked_at ? 'REVOKED' : ($item->expires_at->isPast() ? 'EXPIRED' : 'PENDING')),
             'expires_at' => $item->expires_at, 'created_at' => $item->created_at,
             'invited_by' => $item->inviter?->name,
@@ -34,8 +34,11 @@ class InstitutionInvitationController
         $request->user()->can('manageMembers', $institution) || abort(403);
         $data = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
-            'role' => ['required', Rule::in($this->rolesFor($institution))],
+            'roles' => ['nullable', 'required_without:role', 'array', 'min:1'],
+            'roles.*' => ['string', 'distinct', Rule::in($this->rolesFor($institution))],
+            'role' => ['nullable', 'required_without:roles', Rule::in($this->rolesFor($institution))],
         ]);
+        $data['roles'] = $data['roles'] ?? [$data['role']];
         $email = mb_strtolower(trim($data['email']));
         if (User::whereRaw('LOWER(email) = ?', [$email])->exists()) {
             throw ValidationException::withMessages(['email' => 'Ce courriel appartient déjà à un compte MedTrack. Ajoutez-le comme membre existant.']);
@@ -43,13 +46,13 @@ class InstitutionInvitationController
         $institution->invitations()->where('email', $email)->whereNull('accepted_at')->whereNull('revoked_at')->update(['revoked_at' => now()]);
         $token = Str::random(64);
         $invitation = $institution->invitations()->create([
-            'email' => $email, 'role' => $data['role'], 'token_hash' => hash('sha256', $token),
+            'email' => $email, 'role' => $data['roles'][0], 'roles' => $data['roles'], 'token_hash' => hash('sha256', $token),
             'invited_by' => $request->user()->id, 'expires_at' => now()->addDays(7),
         ]);
         $invitation->load('institution');
         Notification::route('mail', $email)->notify(new InstitutionMemberInvitationNotification($invitation, $token));
 
-        return response()->json(['message' => 'Invitation envoyée.', 'data' => ['id' => $invitation->public_id, 'email' => $email, 'role' => $invitation->role, 'status' => 'PENDING', 'expires_at' => $invitation->expires_at]], 201);
+        return response()->json(['message' => 'Invitation envoyée.', 'data' => ['id' => $invitation->public_id, 'email' => $email, 'roles' => $invitation->roles, 'status' => 'PENDING', 'expires_at' => $invitation->expires_at]], 201);
     }
 
     public function destroy(Request $request, Institution $institution, InstitutionMemberInvitation $invitation): JsonResponse

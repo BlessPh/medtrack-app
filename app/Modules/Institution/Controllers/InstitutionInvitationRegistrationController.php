@@ -19,7 +19,7 @@ class InstitutionInvitationRegistrationController
         $invitation = $this->validInvitation($token);
 
         return response()->json(['data' => [
-            'email' => $invitation->email, 'role' => $invitation->role,
+            'email' => $invitation->email, 'roles' => $invitation->roles ?: [$invitation->role],
             'institution' => ['id' => $invitation->institution->public_id, 'name' => $invitation->institution->name, 'type' => $invitation->institution->type],
             'expires_at' => $invitation->expires_at,
         ]]);
@@ -43,7 +43,9 @@ class InstitutionInvitationRegistrationController
             $user = User::create(['name' => trim($data['name']), 'email' => $invitation->email, 'phone' => $data['phone'] ?? null, 'password' => $data['password'], 'status' => UserStatus::Active]);
             $user->forceFill(['email_verified_at' => now()])->save();
             $invitation->institution->members()->attach($user->id);
-            $access->assign($user, $invitation->institution_id, $invitation->role);
+            foreach (($invitation->roles ?: [$invitation->role]) as $role) {
+                $access->assign($user, $invitation->institution_id, $role);
+            }
             $invitation->update(['accepted_user_id' => $user->id, 'accepted_at' => now()]);
 
             return $user;

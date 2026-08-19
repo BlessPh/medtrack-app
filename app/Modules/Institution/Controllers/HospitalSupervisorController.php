@@ -17,7 +17,8 @@ class HospitalSupervisorController
 {
     public function index(Request $request, Institution $institution, InstitutionAccess $access): JsonResponse
     {
-        $this->authorize($request, $institution);
+        abort_unless($institution->type === 'HOSPITAL', 422, 'Cette fonctionnalité est réservée aux hôpitaux.');
+        abort_unless($access->has($request->user(), $institution->id, [InstitutionRole::Admin->value, InstitutionRole::HospitalManager->value]), 403);
         $supervisorIds = DB::table('model_has_roles')->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
             ->where('model_has_roles.institution_id', $institution->id)
             ->where('model_has_roles.model_type', User::class)
