@@ -14,7 +14,7 @@ class InstitutionAccess
             return true;
         }
 
-        if (! $user->institutions()->whereKey($institutionId)->exists()) {
+        if (! $user->institutions()->whereKey($institutionId)->wherePivot('status', 'ACTIVE')->exists()) {
             return false;
         }
 

@@ -50,7 +50,7 @@ class Institution extends Model
         return $this->belongsToMany(
             User::class,
             'institution_memberships',
-        )->withTimestamps();
+        )->withPivot(['status', 'suspended_at', 'suspended_by', 'suspension_reason'])->withTimestamps();
     }
 
     public function media(): MorphMany

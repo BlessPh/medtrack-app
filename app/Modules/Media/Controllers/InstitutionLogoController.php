@@ -44,6 +44,7 @@ class InstitutionLogoController
 
                 return $institution->media()->create([
                     'collection' => 'LOGO', 'disk' => 'local', 'path' => $path,
+                    'display_name' => 'Logo de '.$institution->name,
                     'original_name' => $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
                     'size' => $file->getSize(), 'checksum' => $checksum,

@@ -46,7 +46,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->belongsToMany(
             Institution::class,
             'institution_memberships',
-        )->withTimestamps();
+        )->withPivot(['status', 'suspended_at', 'suspended_by', 'suspension_reason'])->withTimestamps();
     }
 
     public function getJWTIdentifier(): mixed

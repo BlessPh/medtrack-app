@@ -16,7 +16,7 @@ class UserResource extends JsonResource
             ->where('model_has_roles.model_id', $this->id)
             ->select('roles.name', 'model_has_roles.institution_id')
             ->get();
-        $institutions = $this->institutions()->orderBy('name')->get()->map(function ($institution) use ($assignments): array {
+        $institutions = $this->institutions()->wherePivot('status', 'ACTIVE')->orderBy('name')->get()->map(function ($institution) use ($assignments): array {
             return [
                 'id' => $institution->public_id,
                 'name' => $institution->name,

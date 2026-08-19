@@ -65,6 +65,74 @@ class InstitutionController
         return new InstitutionResource($institution->load('logo'));
     }
 
+    /**
+     * Return the operational overview of a hospital managed by the current user.
+     * Every aggregate is scoped with the internal institution id after policy
+     * authorization, so a client cannot inspect another hospital by changing the UUID.
+     */
+    public function dashboard(Request $request, Institution $institution): JsonResponse
+    {
+        $request->user()->can('view', $institution) || abort(403);
+        abort_unless($institution->type === 'HOSPITAL', 422, 'Ce tableau de bord est réservé aux hôpitaux.');
+
+        $supervisors = DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('model_has_roles.institution_id', $institution->id)
+            ->where('model_has_roles.model_type', \App\Modules\Auth\Models\User::class)
+            ->where('roles.name', InstitutionRole::Supervisor->value)
+            ->distinct('model_has_roles.model_id')
+            ->count('model_has_roles.model_id');
+
+        $capacity = DB::table('capacity_pools')
+            ->join('campaign_hospitals', 'campaign_hospitals.id', '=', 'capacity_pools.campaign_hospital_id')
+            ->where('campaign_hospitals.hospital_id', $institution->id)
+            ->selectRaw('COALESCE(SUM(capacity_pools.total_places), 0) AS total_places')
+            ->selectRaw('COALESCE(SUM(capacity_pools.reserved_places), 0) AS reserved_places')
+            ->first();
+
+        $institution->load(['addresses', 'contacts', 'logo'])->loadCount(['units', 'members']);
+        $missing = collect([
+            'general_information' => filled($institution->registration_number) && filled($institution->description),
+            'logo' => $institution->logo !== null,
+            'address' => $institution->addresses->isNotEmpty(),
+            'contact' => $institution->contacts->isNotEmpty(),
+            'services' => $institution->units_count > 0,
+            'members' => $institution->members_count > 1,
+        ])->reject()->keys()->values();
+
+        $notifications = $request->user()->notifications()->latest()->limit(50)->get()
+            ->filter(fn ($notification) => ($notification->data['institution_id'] ?? null) === $institution->public_id)
+            ->take(5)->values()->map(fn ($notification): array => [
+                'id' => $notification->id,
+                'title' => $notification->data['title'] ?? 'Notification',
+                'message' => $notification->data['message'] ?? '',
+                'severity' => $notification->data['severity'] ?? 'INFO',
+                'url' => $notification->data['url'] ?? null,
+                'read_at' => $notification->read_at,
+                'created_at' => $notification->created_at,
+            ]);
+
+        return response()->json(['data' => [
+            'institution' => new InstitutionResource($institution),
+            'configuration' => [
+                'completion' => (int) round((6 - $missing->count()) / 6 * 100),
+                'missing' => $missing,
+            ],
+            'statistics' => [
+                'services' => $institution->units_count,
+                'members' => $institution->members_count,
+                'supervisors' => $supervisors,
+                'active_internships' => DB::table('internships')->where('hospital_id', $institution->id)->where('status', 'ACTIVE')->count(),
+                'pending_applications' => DB::table('applications')->where('preferred_hospital_id', $institution->id)->where('status', 'SUBMITTED')->count(),
+                'pending_d4_requests' => DB::table('campaign_hospitals')->where('hospital_id', $institution->id)->where('request_status', 'PENDING')->count(),
+                'total_capacity' => (int) ($capacity->total_places ?? 0),
+                'reserved_capacity' => (int) ($capacity->reserved_places ?? 0),
+                'available_capacity' => max(0, (int) ($capacity->total_places ?? 0) - (int) ($capacity->reserved_places ?? 0)),
+            ],
+            'recent_notifications' => $notifications,
+        ]]);
+    }
+
     public function update(SaveInstitutionRequest $request, Institution $institution): InstitutionResource
     {
         $request->user()->can('update', $institution) || abort(403);

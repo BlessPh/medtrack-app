@@ -33,8 +33,9 @@ class InstitutionApiTest extends TestCase
         $other = Institution::factory()->create();
         $this->assignInstitutionRole($user, $own, InstitutionRole::Admin->value);
 
-        $this->actingAs($user)->putJson("/api/v1/institutions/{$own->public_id}", ['type' => $own->type, 'name' => 'Nouveau nom'])->assertOk();
-        $this->actingAs($user)->putJson("/api/v1/institutions/{$other->public_id}", ['type' => $other->type, 'name' => 'Interdit'])->assertForbidden();
+        $this->actingAs($user)->putJson("/api/v1/institutions/{$own->public_id}", ['name' => 'Nouveau nom'])->assertOk();
+        $this->actingAs($user)->putJson("/api/v1/institutions/{$other->public_id}", ['name' => 'Interdit'])->assertForbidden();
+        $this->actingAs($user)->putJson("/api/v1/institutions/{$own->public_id}", ['type' => 'HOSPITAL', 'name' => 'Interdit'])->assertUnprocessable();
     }
 
     public function test_institution_admin_can_manage_details_but_not_status(): void
@@ -44,7 +45,7 @@ class InstitutionApiTest extends TestCase
         $this->assignInstitutionRole($user, $institution, InstitutionRole::Admin->value);
 
         $this->actingAs($user)->postJson("/api/v1/institutions/{$institution->public_id}/addresses", [
-            'address_line' => '1 avenue Test', 'city' => 'Kinshasa', 'is_primary' => true,
+            'address_line' => '1 avenue Test', 'city' => 'Kinshasa', 'country' => 'CD', 'is_primary' => true,
         ])->assertCreated();
         $this->actingAs($user)->patchJson("/api/v1/institutions/{$institution->public_id}/status", ['status' => 'ACTIVE'])->assertForbidden();
         $this->assertDatabaseHas('institution_addresses', ['institution_id' => $institution->id, 'city' => 'Kinshasa']);
@@ -66,9 +67,71 @@ class InstitutionApiTest extends TestCase
             ->assertCreated()->assertJsonPath('data.mime_type', 'image/png');
 
         $media = $institution->media()->firstOrFail();
+        $this->assertSame("Logo de {$institution->name}", $media->display_name);
         Storage::disk('local')->assertExists($media->path);
         $this->assertStringStartsWith("institutions/{$institution->public_id}/logos/", $media->path);
         $this->get("/api/v1/institutions/{$institution->public_id}/logo")->assertOk()->assertHeader('content-type', 'image/png');
+    }
+
+    public function test_hospital_addresses_keep_one_primary_address_and_require_complete_coordinates(): void
+    {
+        $admin = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+
+        $firstId = $this->actingAs($admin)->postJson("/api/v1/institutions/{$hospital->public_id}/addresses", [
+            'label' => 'Site principal', 'address_line' => '1 avenue de la Santé',
+            'commune' => 'Lemba', 'city' => 'Kinshasa', 'province' => 'Kinshasa',
+            'country' => 'CD', 'latitude' => -4.325, 'longitude' => 15.322,
+        ])->assertCreated()->assertJsonPath('data.is_primary', true)->json('data.id');
+
+        $secondId = $this->postJson("/api/v1/institutions/{$hospital->public_id}/addresses", [
+            'label' => 'Annexe', 'address_line' => '2 avenue des Urgences',
+            'city' => 'Kinshasa', 'country' => 'CD', 'is_primary' => true,
+        ])->assertCreated()->json('data.id');
+
+        $this->assertDatabaseHas('institution_addresses', ['id' => $firstId, 'is_primary' => false]);
+        $this->deleteJson("/api/v1/institutions/{$hospital->public_id}/addresses/{$secondId}")->assertNoContent();
+        $this->assertDatabaseHas('institution_addresses', ['id' => $firstId, 'is_primary' => true]);
+
+        $this->postJson("/api/v1/institutions/{$hospital->public_id}/addresses", [
+            'address_line' => 'Adresse incomplète', 'city' => 'Kinshasa',
+            'country' => 'CD', 'latitude' => -4.325,
+        ])->assertUnprocessable()->assertJsonValidationErrors('longitude');
+    }
+
+    public function test_hospital_admin_manages_primary_contacts_and_service_departments(): void
+    {
+        $admin = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+
+        $emailId = $this->actingAs($admin)->postJson("/api/v1/institutions/{$hospital->public_id}/contacts", [
+            'type' => 'EMAIL', 'value' => 'direction@hopital.test', 'label' => 'Direction',
+        ])->assertCreated()->assertJsonPath('data.is_primary', true)->json('data.id');
+        $phoneId = $this->postJson("/api/v1/institutions/{$hospital->public_id}/contacts", [
+            'type' => 'WHATSAPP', 'value' => '+243 810 000 000', 'label' => 'Urgences', 'is_primary' => true,
+        ])->assertCreated()->json('data.id');
+        $this->assertDatabaseHas('institution_contacts', ['id' => $emailId, 'is_primary' => false]);
+        $this->deleteJson("/api/v1/institutions/{$hospital->public_id}/contacts/{$phoneId}")->assertNoContent();
+        $this->assertDatabaseHas('institution_contacts', ['id' => $emailId, 'is_primary' => true]);
+        $this->postJson("/api/v1/institutions/{$hospital->public_id}/contacts", [
+            'type' => 'EMAIL', 'value' => 'adresse-invalide',
+        ])->assertUnprocessable()->assertJsonValidationErrors('value');
+
+        $serviceId = $this->postJson("/api/v1/institutions/{$hospital->public_id}/units", [
+            'type' => 'SERVICE', 'code' => 'PED', 'name' => 'Pédiatrie',
+        ])->assertCreated()->json('data.id');
+        $departmentId = $this->postJson("/api/v1/institutions/{$hospital->public_id}/units", [
+            'type' => 'DEPARTMENT', 'parent_id' => $serviceId, 'code' => 'PED-HOSP', 'name' => 'Hospitalisation',
+        ])->assertCreated()->json('data.id');
+
+        $this->postJson("/api/v1/institutions/{$hospital->public_id}/units", [
+            'type' => 'DEPARTMENT', 'name' => 'Département sans service',
+        ])->assertUnprocessable();
+        $this->deleteJson("/api/v1/institutions/{$hospital->public_id}/units/{$serviceId}")->assertUnprocessable();
+        $this->deleteJson("/api/v1/institutions/{$hospital->public_id}/units/{$departmentId}")->assertNoContent();
+        $this->deleteJson("/api/v1/institutions/{$hospital->public_id}/units/{$serviceId}")->assertNoContent();
     }
 
     public function test_an_invited_person_can_create_an_account_and_receives_the_contextual_role(): void
@@ -163,5 +226,149 @@ class InstitutionApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.type', 'HOSPITAL')->assertJsonPath('data.legal_form', 'Établissement public');
 
         $this->assertDatabaseHas('institutions', ['type' => 'HOSPITAL', 'name' => 'Hôpital Contexte']);
+    }
+    public function test_hospital_admin_can_view_a_scoped_operational_dashboard(): void
+    {
+        $admin = User::factory()->create();
+        $supervisor = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL', 'status' => 'ACTIVE']);
+        $other = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+        $this->assignInstitutionRole($supervisor, $hospital, InstitutionRole::Supervisor->value);
+        $hospital->units()->create(['type' => 'SERVICE', 'name' => 'Pédiatrie', 'status' => 'ACTIVE']);
+
+        $this->actingAs($admin)->getJson("/api/v1/institutions/{$hospital->public_id}/dashboard")
+            ->assertOk()
+            ->assertJsonPath('data.institution.type', 'HOSPITAL')
+            ->assertJsonPath('data.statistics.services', 1)
+            ->assertJsonPath('data.statistics.members', 2)
+            ->assertJsonPath('data.statistics.supervisors', 1)
+            ->assertJsonStructure(['data' => [
+                'configuration' => ['completion', 'missing'],
+                'statistics' => ['active_internships', 'pending_applications', 'pending_d4_requests', 'total_capacity', 'reserved_capacity', 'available_capacity'],
+                'recent_notifications',
+            ]]);
+
+        $this->actingAs($admin)->getJson("/api/v1/institutions/{$other->public_id}/dashboard")->assertForbidden();
+    }
+
+    public function test_hospital_admin_can_configure_supervisors_and_their_services(): void
+    {
+        $admin = User::factory()->create();
+        $supervisor = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $otherHospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+        $this->assignInstitutionRole($supervisor, $hospital, InstitutionRole::Supervisor->value);
+        $service = $hospital->units()->create(['type' => 'SERVICE', 'name' => 'Pédiatrie', 'status' => 'ACTIVE']);
+        $department = $hospital->units()->create(['type' => 'DEPARTMENT', 'parent_id' => $service->id, 'name' => 'Hospitalisation', 'status' => 'ACTIVE']);
+
+        $this->actingAs($admin)->getJson("/api/v1/institutions/{$hospital->public_id}/supervisors")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $supervisor->public_id)
+            ->assertJsonPath('data.0.availability_status', 'AVAILABLE')
+            ->assertJsonPath('data.0.active_internships_count', 0);
+
+        $this->putJson("/api/v1/institutions/{$hospital->public_id}/supervisors/{$supervisor->public_id}", [
+            'service_ids' => [$service->id],
+            'availability_status' => 'LIMITED',
+            'availability_note' => 'Disponible trois jours par semaine.',
+            'stages_enabled' => true,
+        ])->assertOk()->assertJsonPath('data.availability_status', 'LIMITED');
+        $this->assertDatabaseHas('hospital_supervisor_profiles', [
+            'institution_id' => $hospital->id,
+            'user_id' => $supervisor->id,
+            'availability_status' => 'LIMITED',
+        ]);
+        $this->assertDatabaseHas('hospital_supervisor_services', ['institution_unit_id' => $service->id]);
+
+        $this->putJson("/api/v1/institutions/{$hospital->public_id}/supervisors/{$supervisor->public_id}", [
+            'service_ids' => [$department->id],
+            'availability_status' => 'AVAILABLE',
+            'stages_enabled' => true,
+        ])->assertUnprocessable();
+        $this->getJson("/api/v1/institutions/{$otherHospital->public_id}/supervisors")->assertForbidden();
+    }
+
+    public function test_hospital_admin_cannot_remove_self_and_role_change_cleans_supervisor_profile(): void
+    {
+        $admin = User::factory()->create();
+        $supervisor = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+        $this->assignInstitutionRole($supervisor, $hospital, InstitutionRole::Supervisor->value);
+        $profile = \App\Modules\Institution\Models\HospitalSupervisorProfile::create([
+            'institution_id' => $hospital->id,
+            'user_id' => $supervisor->id,
+            'availability_status' => 'AVAILABLE',
+            'stages_enabled' => true,
+        ]);
+
+        $this->actingAs($admin)->deleteJson("/api/v1/institutions/{$hospital->public_id}/members/{$admin->public_id}")
+            ->assertStatus(409);
+        $this->putJson("/api/v1/institutions/{$hospital->public_id}/members/{$supervisor->public_id}", [
+            'role' => InstitutionRole::Member->value,
+        ])->assertOk();
+        $this->assertDatabaseMissing('hospital_supervisor_profiles', ['id' => $profile->id]);
+    }
+
+    public function test_hospital_notification_can_target_a_role_and_service_and_is_audited(): void
+    {
+        Notification::fake();
+        $admin = User::factory()->create();
+        $supervisor = User::factory()->create();
+        $otherSupervisor = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+        $this->assignInstitutionRole($supervisor, $hospital, InstitutionRole::Supervisor->value);
+        $this->assignInstitutionRole($otherSupervisor, $hospital, InstitutionRole::Supervisor->value);
+        $service = $hospital->units()->create(['type' => 'SERVICE', 'name' => 'Urgences', 'status' => 'ACTIVE']);
+        $profile = \App\Modules\Institution\Models\HospitalSupervisorProfile::create([
+            'institution_id' => $hospital->id, 'user_id' => $supervisor->id,
+            'availability_status' => 'AVAILABLE', 'stages_enabled' => true,
+        ]);
+        $profile->services()->attach($service);
+
+        $this->actingAs($admin)->postJson("/api/v1/institutions/{$hospital->public_id}/notifications", [
+            'title' => 'Réunion des urgences',
+            'message' => 'Briefing demain matin.',
+            'role' => InstitutionRole::Supervisor->value,
+            'service_id' => $service->id,
+        ])->assertCreated()->assertJsonPath('data.recipients_count', 1);
+
+        Notification::assertSentTo($supervisor, \App\Modules\Notification\Notifications\InstitutionNotification::class);
+        Notification::assertNotSentTo($otherSupervisor, \App\Modules\Notification\Notifications\InstitutionNotification::class);
+        $this->assertDatabaseHas('institution_audit_logs', [
+            'institution_id' => $hospital->id,
+            'actor_user_id' => $admin->id,
+            'action' => 'NOTIFICATION_SENT',
+        ]);
+    }
+
+    public function test_institution_admin_can_suspend_and_reactivate_a_member_without_disabling_global_account(): void
+    {
+        $admin = User::factory()->create();
+        $member = User::factory()->create();
+        $hospital = Institution::factory()->create(['type' => 'HOSPITAL']);
+        $this->assignInstitutionRole($admin, $hospital, InstitutionRole::Admin->value);
+        $this->assignInstitutionRole($member, $hospital, InstitutionRole::Member->value);
+
+        $this->actingAs($admin)->patchJson("/api/v1/institutions/{$hospital->public_id}/members/{$member->public_id}/status", [
+            'status' => 'SUSPENDED', 'reason' => 'Accès temporairement suspendu.',
+        ])->assertOk();
+        $this->assertDatabaseHas('institution_memberships', [
+            'institution_id' => $hospital->id, 'user_id' => $member->id,
+            'status' => 'SUSPENDED', 'suspension_reason' => 'Accès temporairement suspendu.',
+        ]);
+        $this->actingAs($member)->getJson("/api/v1/institutions/{$hospital->public_id}")->assertForbidden();
+        $this->assertSame('ACTIVE', $member->fresh()->status->value);
+
+        $this->actingAs($admin)->patchJson("/api/v1/institutions/{$hospital->public_id}/members/{$member->public_id}/status", [
+            'status' => 'ACTIVE',
+        ])->assertOk();
+        $this->actingAs($member)->getJson("/api/v1/institutions/{$hospital->public_id}")->assertOk();
+        $this->assertDatabaseHas('institution_audit_logs', ['action' => 'MEMBER_SUSPENDED', 'subject_id' => $member->public_id]);
+        $this->assertDatabaseHas('institution_audit_logs', ['action' => 'MEMBER_REACTIVATED', 'subject_id' => $member->public_id]);
     }
 }

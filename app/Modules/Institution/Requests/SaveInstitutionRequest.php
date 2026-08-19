@@ -17,7 +17,9 @@ class SaveInstitutionRequest extends FormRequest
         $id = $this->route('institution')?->id;
 
         return [
-            'type' => ['required', Rule::in(['UNIVERSITY', 'HOSPITAL', 'CLINIC', 'OTHER'])],
+            'type' => $id
+                ? ['prohibited']
+                : ['required', Rule::in(['UNIVERSITY', 'HOSPITAL', 'CLINIC', 'OTHER'])],
             'name' => ['required', 'string', 'max:255'],
             'short_name' => ['nullable', 'string', 'max:100'],
             'registration_number' => ['nullable', 'string', 'max:100', Rule::unique('institutions')->ignore($id)],

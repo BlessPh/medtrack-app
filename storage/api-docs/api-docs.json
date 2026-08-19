@@ -5747,15 +5747,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "UNIVERSITY",
-                                            "HOSPITAL",
-                                            "CLINIC",
-                                            "OTHER"
-                                        ]
-                                    },
                                     "name": {
                                         "type": "string",
                                         "example": null
@@ -5812,7 +5803,6 @@
                                     }
                                 },
                                 "required": [
-                                    "type",
                                     "name"
                                 ]
                             }
@@ -5911,7 +5901,8 @@
                                 },
                                 "required": [
                                     "address_line",
-                                    "city"
+                                    "city",
+                                    "country"
                                 ]
                             }
                         }
@@ -6202,6 +6193,52 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/institutions/{institution}/dashboard": {
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/dashboard",
+                "operationId": "getInstitutionsInstitutionDashboard",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/institutions/{institution}/logo": {
@@ -6812,6 +6849,91 @@
                 ]
             }
         },
+        "/api/v1/institutions/{institution}/members/{user}/status": {
+            "patch": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Mettre à jour institutions/institution/members/user/status",
+                "operationId": "patchInstitutionsInstitutionMembersUserStatus",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "SUSPENDED"
+                                        ]
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "status"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/institutions/{institution}/notifications": {
             "post": {
                 "tags": [
@@ -6963,6 +7085,149 @@
                                 },
                                 "required": [
                                     "status"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/institutions/{institution}/supervisors": {
+            "get": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Consulter institutions/institution/supervisors",
+                "operationId": "getInstitutionsInstitutionSupervisors",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/institutions/{institution}/supervisors/{user}": {
+            "put": {
+                "tags": [
+                    "Institutions"
+                ],
+                "summary": "Remplacer institutions/institution/supervisors/user",
+                "operationId": "putInstitutionsInstitutionSupervisorsUser",
+                "parameters": [
+                    {
+                        "name": "institution",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "service_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/IntegerListItem"
+                                        }
+                                    },
+                                    "availability_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "AVAILABLE",
+                                            "LIMITED",
+                                            "UNAVAILABLE"
+                                        ]
+                                    },
+                                    "availability_note": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "stages_enabled": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "service_ids",
+                                    "availability_status",
+                                    "stages_enabled"
                                 ]
                             }
                         }

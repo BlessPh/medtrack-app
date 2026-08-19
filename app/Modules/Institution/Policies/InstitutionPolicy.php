@@ -16,7 +16,7 @@ class InstitutionPolicy
 
     public function view(User $user, Institution $institution): bool
     {
-        return app(InstitutionAccess::class)->isSuperAdmin($user) || $user->institutions()->whereKey($institution)->exists();
+        return app(InstitutionAccess::class)->isSuperAdmin($user) || $user->institutions()->whereKey($institution)->wherePivot('status', 'ACTIVE')->exists();
     }
 
     public function create(User $user): bool
