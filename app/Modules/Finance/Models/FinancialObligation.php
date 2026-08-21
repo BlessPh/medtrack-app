@@ -33,4 +33,7 @@ class FinancialObligation extends Model
     {
         return $this->hasMany(FinancialObligationItem::class, 'obligation_id');
     }
+
+    public function institution(): BelongsTo { return $this->belongsTo(\App\Modules\Institution\Models\Institution::class); }
+    public function campaign(): BelongsTo { return $this->belongsTo(\App\Modules\Academic\Models\Campaign::class); }
 }

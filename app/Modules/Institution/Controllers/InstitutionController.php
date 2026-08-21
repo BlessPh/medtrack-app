@@ -18,15 +18,20 @@ class InstitutionController
     public function index(Request $request): AnonymousResourceCollection
     {
         $request->user()->can('viewAny', Institution::class) || abort(403);
+        $requestedType = $request->string('type')->trim()->upper()->value();
         $query = Institution::query()->with(['addresses', 'logo'])->withCount(['units', 'members']);
         if (! app(InstitutionAccess::class)->isSuperAdmin($request->user())) {
             $query->where('status', 'ACTIVE');
-            $query->whereHas('members', fn ($q) => $q->whereKey($request->user()));
+            // Universities need the active hospital directory to prepare D4
+            // reservation requests. Detail endpoints remain policy-protected.
+            if ($requestedType !== 'HOSPITAL') {
+                $query->whereHas('members', fn ($q) => $q->whereKey($request->user()));
+            }
         }
 
         $query->when($request->string('search')->trim()->value(), function ($query, string $search): void {
             $query->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('short_name', 'like', "%{$search}%")->orWhere('registration_number', 'like', "%{$search}%"));
-        })->when($request->string('type')->trim()->value(), fn ($query, string $type) => $query->where('type', $type))
+        })->when($requestedType, fn ($query, string $type) => $query->where('type', $type))
             ->when($request->string('status')->trim()->value(), fn ($query, string $status) => $query->where('status', $status));
 
         return InstitutionResource::collection($query->orderBy('name')->paginate(min($request->integer('per_page', 25), 100)));

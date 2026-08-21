@@ -16,7 +16,7 @@ class PaymentTransaction extends Model
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'paid_at' => 'datetime'];
+        return ['amount' => 'decimal:2', 'paid_at' => 'datetime', 'verified_at' => 'datetime'];
     }
 
     public function allocations(): HasMany
@@ -33,4 +33,8 @@ class PaymentTransaction extends Model
     {
         return $this->hasMany(PaymentRefund::class, 'transaction_id');
     }
+
+    public function institution(): BelongsTo { return $this->belongsTo(\App\Modules\Institution\Models\Institution::class); }
+    public function recordedBy(): BelongsTo { return $this->belongsTo(\App\Modules\Auth\Models\User::class, 'recorded_by'); }
+    public function verifiedBy(): BelongsTo { return $this->belongsTo(\App\Modules\Auth\Models\User::class, 'verified_by'); }
 }

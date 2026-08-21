@@ -52,6 +52,19 @@ class StudentManagementController
     public function academicRecord(Request $request, Student $student): JsonResponse
     {
         abort_unless(app(AcademicPolicy::class)->viewStudent($request->user(), $student), 403);
+        return $this->academicRecordResponse($request, $student);
+    }
+
+    /** Return the authenticated student's own academic identity and history. */
+    public function myAcademicRecord(Request $request): JsonResponse
+    {
+        $student = Student::query()->where('user_id', $request->user()->id)->firstOrFail();
+
+        return $this->academicRecordResponse($request, $student);
+    }
+
+    private function academicRecordResponse(Request $request, Student $student): JsonResponse
+    {
         $student->load($this->relations());
         $activePromotionId = $student->enrollments->firstWhere('status', 'ACTIVE')?->promotion_id;
         $campaigns = Campaign::query()->where('university_id', $student->university_id)
@@ -118,5 +131,5 @@ class StudentManagementController
     private function university(string $id): Institution { return Institution::where('public_id', $id)->where('type', 'UNIVERSITY')->firstOrFail(); }
     private function promotion(int $id, Institution $university): Promotion { $promotion = Promotion::with('program')->findOrFail($id); abort_unless($promotion->program->university_id === $university->id, 422, 'La promotion n’appartient pas à cette université.'); return $promotion; }
     private function uniqueNumber(Institution $university, string $number, ?Student $except = null): void { $query = Student::where('university_id', $university->id)->whereRaw('UPPER(student_number) = ?', [mb_strtoupper(trim($number))]); if ($except) $query->whereKeyNot($except->id); if ($query->exists()) throw ValidationException::withMessages(['student_number' => 'Ce matricule existe déjà dans cette université.']); }
-    private function relations(): array { return ['user', 'university', 'enrollments' => fn ($query) => $query->with(['promotion.program', 'promotion.level', 'promotion.academicYear'])->latest('enrolled_at')]; }
+    private function relations(): array { return ['user', 'university', 'enrollments' => fn ($query) => $query->with(['promotion.program.department', 'promotion.level', 'promotion.academicYear'])->latest('enrolled_at')]; }
 }

@@ -22,7 +22,7 @@ class CampaignManagementController
 {
     public function index(Request $request): JsonResponse
     {
-        $data = $request->validate(['university_id' => ['required', 'uuid'], 'status' => ['nullable', Rule::in(['DRAFT', 'OPEN', 'CLOSED', 'CANCELLED'])], 'academic_year_id' => ['nullable', 'integer']]);
+        $data = $request->validate(['university_id' => ['required', 'uuid'], 'status' => ['nullable', Rule::in(['DRAFT', 'HOSPITAL_REQUESTS', 'OPEN', 'CLOSED', 'CANCELLED'])], 'academic_year_id' => ['nullable', 'integer']]);
         $university = $this->university($data['university_id']);
         $this->view($request, $university);
         $query = Campaign::query()->where('university_id', $university->id)->with($this->relations())->withCount(['promotions', 'hospitals']);
@@ -74,11 +74,52 @@ class CampaignManagementController
     {
         abort_unless(app(AcademicPolicy::class)->manage($request->user(), $campaign->university_id), 403);
         $data = $request->validate(['status' => ['required', Rule::in(['OPEN', 'CLOSED', 'CANCELLED'])]]);
-        $allowed = ['DRAFT' => ['OPEN', 'CANCELLED'], 'OPEN' => ['CLOSED', 'CANCELLED']];
+        $allowed = ['DRAFT' => ['OPEN', 'CANCELLED'], 'HOSPITAL_REQUESTS' => ['OPEN', 'CANCELLED'], 'OPEN' => ['CLOSED', 'CANCELLED']];
         abort_unless(in_array($data['status'], $allowed[$campaign->status] ?? [], true), 409, 'Transition de campagne invalide.');
-        $campaign->update($data);
+        if ($campaign->strategy === 'D4_RESERVATION' && $data['status'] === 'OPEN') {
+            abort_unless($campaign->status === 'HOSPITAL_REQUESTS', 409, 'Envoyez d’abord les demandes aux hôpitaux.');
+            abort_unless($campaign->hospitals()->where('request_status', 'ACCEPTED')->exists(), 422, 'Au moins un hôpital doit avoir accepté la demande.');
+            DB::transaction(function () use ($campaign): void {
+                $campaign->hospitals()->where('request_status', 'PENDING')->update([
+                    'request_status' => 'CANCELLED',
+                    'responded_at' => now(),
+                    'response_note' => 'Demande annulée automatiquement lors de l’ouverture aux étudiants.',
+                ]);
+                $campaign->update(['status' => 'OPEN']);
+            });
+        } else {
+            $campaign->update($data);
+        }
         if ($data['status'] === 'OPEN') $this->notifyOpening($campaign->fresh()->load(['promotions', 'hospitals.hospital']));
         return response()->json(['data' => $campaign->fresh()]);
+    }
+
+    /** Envoie les demandes D4 avant que la campagne ne soit visible par les étudiants. */
+    public function sendHospitalRequests(Request $request, Campaign $campaign): JsonResponse
+    {
+        abort_unless(app(AcademicPolicy::class)->manage($request->user(), $campaign->university_id), 403);
+        abort_unless($campaign->strategy === 'D4_RESERVATION' && $campaign->status === 'DRAFT', 409, 'Seule une campagne D4 en brouillon peut être envoyée.');
+        abort_unless($campaign->hospitals()->exists(), 422, 'Sélectionnez au moins un hôpital.');
+
+        DB::transaction(function () use ($campaign): void {
+            $campaign->hospitals()->where('request_status', 'PENDING')->update(['requested_at' => now()]);
+            $campaign->update(['status' => 'HOSPITAL_REQUESTS']);
+        });
+
+        $campaign->load(['university', 'hospitals.hospital.members']);
+        foreach ($campaign->hospitals as $hospitalRequest) {
+            Notification::send($hospitalRequest->hospital->members, new InstitutionNotification(
+                $hospitalRequest->hospital->public_id,
+                $hospitalRequest->hospital->name,
+                'Demande de réservation D4',
+                $campaign->university->name.' souhaite réserver des places de stage de fin de cycle.',
+                'CAMPAIGN_REQUEST',
+                'INFO',
+                '/hospital/campaign-requests',
+            ));
+        }
+
+        return response()->json(['data' => $campaign->fresh()->load($this->relations())]);
     }
 
     public function eligibility(Request $request, Campaign $campaign, Student $student, EligibilityService $service): JsonResponse
@@ -114,9 +155,5 @@ class CampaignManagementController
         $university = Institution::findOrFail($campaign->university_id);
         $users = Student::query()->whereNotNull('user_id')->whereHas('enrollments', fn ($query) => $query->where('status', 'ACTIVE')->whereIn('promotion_id', $campaign->promotions->pluck('id')))->with('user')->get()->pluck('user')->filter();
         Notification::send($users, new InstitutionNotification($university->public_id, $university->name, 'Nouvelle campagne de stage', $campaign->name.' est désormais ouverte.', 'CAMPAIGN', 'INFO', '/student/campaigns/'.$campaign->public_id));
-        if ($campaign->strategy === 'D4_RESERVATION') foreach ($campaign->hospitals as $request) {
-            $request->update(['requested_at' => now()]);
-            Notification::send($request->hospital->members()->get(), new InstitutionNotification($request->hospital->public_id, $request->hospital->name, 'Demande de réservation D4', $university->name.' souhaite réserver des places de stage de fin de cycle.', 'CAMPAIGN_REQUEST', 'INFO', '/hospital/campaign-requests/'.$request->public_id));
-        }
     }
 }

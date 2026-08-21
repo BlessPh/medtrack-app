@@ -19,12 +19,17 @@ class FinanceController
 {
     public function obligation(Request $request): JsonResponse
     {
-        $data = $request->validate(['student_id' => ['required', 'uuid', 'exists:students,public_id'], 'institution_id' => ['required', 'uuid', 'exists:institutions,public_id'], 'type' => ['required', 'string', 'max:40'], 'description' => ['required', 'string'], 'currency' => ['required', 'string', 'size:3'], 'items' => ['required', 'array', 'min:1'], 'items.*.label' => ['required', 'string'], 'items.*.quantity' => ['required', 'numeric', 'gt:0'], 'items.*.unit_amount' => ['required', 'numeric', 'gte:0']]);
+        $data = $request->validate(['student_id' => ['required', 'uuid', 'exists:students,public_id'], 'institution_id' => ['required', 'uuid', 'exists:institutions,public_id'], 'campaign_id' => ['nullable', 'uuid', 'exists:campaigns,public_id'], 'type' => ['required', 'string', 'max:40'], 'description' => ['required', 'string'], 'currency' => ['required', 'string', 'size:3'], 'due_date' => ['nullable', 'date'], 'items' => ['required', 'array', 'min:1'], 'items.*.label' => ['required', 'string'], 'items.*.quantity' => ['required', 'numeric', 'gt:0'], 'items.*.unit_amount' => ['required', 'numeric', 'gte:0']]);
         $institution = Institution::where('public_id', $data['institution_id'])->firstOrFail();
         abort_unless(app(InstitutionAccess::class)->has($request->user(), $institution->id, [InstitutionRole::FinanceOfficer->value]), 403);
         $student = Student::where('public_id', $data['student_id'])->firstOrFail();
+        if ($institution->type === 'HOSPITAL') {
+            abort_unless($student->admissions()->where('hospital_id', $institution->id)->exists(), 422, 'Cet étudiant n’est pas admis dans cet hôpital.');
+        }
         $amount = collect($data['items'])->sum(fn ($item) => round($item['quantity'] * $item['unit_amount'], 2));
-        $obligation = FinancialObligation::create(['student_id' => $student->id, 'institution_id' => $institution->id, 'type' => $data['type'], 'description' => $data['description'], 'amount' => $amount, 'currency' => strtoupper($data['currency']), 'status' => 'PENDING']);
+        $campaignId = isset($data['campaign_id']) ? \App\Modules\Academic\Models\Campaign::where('public_id', $data['campaign_id'])->where('university_id', $student->university_id)->value('id') : null;
+        abort_if(isset($data['campaign_id']) && ! $campaignId, 422, 'La campagne ne correspond pas à l’université de cet étudiant.');
+        $obligation = FinancialObligation::create(['student_id' => $student->id, 'institution_id' => $institution->id, 'campaign_id' => $campaignId, 'type' => $data['type'], 'description' => $data['description'], 'amount' => $amount, 'currency' => strtoupper($data['currency']), 'due_date' => $data['due_date'] ?? null, 'status' => 'PENDING']);
         $obligation->items()->createMany($data['items']);
 
         return response()->json(['data' => $obligation->load('items')], 201);
@@ -38,7 +43,7 @@ class FinanceController
         abort_if((float) $data['amount'] > (float) $obligation->amount - (float) $obligation->paid_amount, 422);
         $reference = (string) Str::uuid();
         $gatewayData = $gateway->create($reference, number_format($data['amount'], 2, '.', ''), $obligation->currency);
-        $transaction = PaymentTransaction::create(['student_id' => $obligation->student_id, 'provider' => 'MAISHAPAY', 'provider_reference' => $gatewayData['reference'], 'amount' => $data['amount'], 'currency' => $obligation->currency, 'method' => $data['method'], 'status' => 'PENDING']);
+        $transaction = PaymentTransaction::create(['student_id' => $obligation->student_id, 'institution_id' => $obligation->institution_id, 'provider' => 'MAISHAPAY', 'provider_reference' => $gatewayData['reference'], 'amount' => $data['amount'], 'currency' => $obligation->currency, 'method' => $data['method'], 'source' => 'ONLINE', 'status' => 'PENDING']);
 
         return response()->json(['data' => $transaction], 201);
     }
@@ -61,7 +66,9 @@ class FinanceController
 
     public function refund(Request $request, PaymentTransaction $transaction, PaymentGateway $gateway): JsonResponse
     {
-        abort_unless($transaction->student->user_id === $request->user()->id, 403);
+        $isOwner = $transaction->student->user_id === $request->user()->id;
+        $canManage = $transaction->institution_id && app(InstitutionAccess::class)->has($request->user(), $transaction->institution_id, [InstitutionRole::FinanceOfficer->value]);
+        abort_unless($isOwner || $canManage, 403);
         $data = $request->validate(['amount' => ['required', 'numeric', 'gt:0'], 'reason' => ['required', 'string']]);
         abort_unless($transaction->status === 'PAID' && (float) $data['amount'] <= (float) $transaction->amount - (float) $transaction->refunds()->where('status', 'PROCESSED')->sum('amount'), 422);
         $result = $gateway->refund($transaction->provider_reference, (string) $data['amount']);

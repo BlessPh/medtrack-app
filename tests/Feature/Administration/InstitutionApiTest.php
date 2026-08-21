@@ -19,6 +19,23 @@ class InstitutionApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_university_manager_can_select_active_hospitals_from_the_system_directory(): void
+    {
+        $university = Institution::factory()->create(['type' => 'UNIVERSITY', 'status' => 'ACTIVE']);
+        $activeHospital = Institution::factory()->create(['type' => 'HOSPITAL', 'status' => 'ACTIVE']);
+        $inactiveHospital = Institution::factory()->create(['type' => 'HOSPITAL', 'status' => 'SUSPENDED']);
+        $manager = User::factory()->create();
+        $this->assignInstitutionRole($manager, $university, InstitutionRole::AcademicManager->value);
+
+        $response = $this->actingAs($manager)
+            ->getJson('/api/v1/institutions?type=HOSPITAL&status=ACTIVE&per_page=100')
+            ->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id');
+        $this->assertTrue($ids->contains($activeHospital->public_id));
+        $this->assertFalse($ids->contains($inactiveHospital->public_id));
+    }
+
     public function test_super_admin_can_create_an_institution(): void
     {
         $admin = User::factory()->create();

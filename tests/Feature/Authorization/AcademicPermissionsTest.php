@@ -82,6 +82,10 @@ class AcademicPermissionsTest extends TestCase
             ->assertOk();
         $this->getJson("/api/v1/academic/students/{$student->public_id}/academic-record")
             ->assertOk();
+        $this->getJson('/api/v1/academic/my-academic-record')
+            ->assertOk()
+            ->assertJsonPath('data.student.id', $student->public_id)
+            ->assertJsonPath('data.student.university.id', $university->public_id);
         $this->getJson("/api/v1/academic/students/{$otherStudent->public_id}")
             ->assertForbidden();
         $this->getJson("/api/v1/academic/programs?university_id={$university->public_id}")

@@ -178,6 +178,118 @@
                 }
             }
         },
+        "/api/v1/academic/campaign-reservations": {
+            "get": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Consulter academic/campaign reservations",
+                "operationId": "getAcademicCampaignReservations",
+                "parameters": [
+                    {
+                        "name": "hospital_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "RESERVED",
+                                "ACCEPTED",
+                                "CANCELLED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/academic/campaign-reservations/{application}/admit": {
+            "post": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Créer ou déclencher academic/campaign reservations/application/admit",
+                "operationId": "postAcademicCampaignReservationsApplicationAdmit",
+                "parameters": [
+                    {
+                        "name": "application",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/academic/campaign-reservations/{application}/cancel": {
             "patch": {
                 "tags": [
@@ -252,6 +364,7 @@
                             "type": "string",
                             "enum": [
                                 "DRAFT",
+                                "HOSPITAL_REQUESTS",
                                 "OPEN",
                                 "CLOSED",
                                 "CANCELLED"
@@ -616,6 +729,55 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/academic/campaigns/{campaign}/send-hospital-requests": {
+            "post": {
+                "tags": [
+                    "Académique"
+                ],
+                "summary": "Créer ou déclencher academic/campaigns/campaign/send hospital requests",
+                "operationId": "postAcademicCampaignsCampaignSendHospitalRequests",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/academic/campaigns/{campaign}/status": {
@@ -2924,6 +3086,48 @@
                         "$ref": "#/components/responses/Success"
                     }
                 }
+            }
+        },
+        "/api/v1/admissions/hospital-admissions": {
+            "get": {
+                "tags": [
+                    "Admissions"
+                ],
+                "summary": "Consulter admissions/hospital admissions",
+                "operationId": "getAdmissionsHospitalAdmissions",
+                "parameters": [
+                    {
+                        "name": "hospital_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/admissions/hospital-applications": {
@@ -5327,6 +5531,135 @@
                 }
             }
         },
+        "/api/v1/finance/context": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Consulter finance/context",
+                "operationId": "getFinanceContext",
+                "parameters": [
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/dashboard": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Consulter finance/dashboard",
+                "operationId": "getFinanceDashboard",
+                "parameters": [
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "campaign_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/finance/health": {
             "get": {
                 "tags": [
@@ -5341,7 +5674,204 @@
                 }
             }
         },
+        "/api/v1/finance/manual-payments": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Créer ou déclencher finance/manual payments",
+                "operationId": "postFinanceManualPayments",
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "institution_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "obligation_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "amount": {
+                                        "type": "number"
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "method": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "payer_reference": {
+                                        "type": "string",
+                                        "example": null
+                                    },
+                                    "paid_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": null
+                                    }
+                                },
+                                "required": [
+                                    "institution_id",
+                                    "obligation_id",
+                                    "amount",
+                                    "currency",
+                                    "method",
+                                    "payer_reference",
+                                    "paid_at"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/finance/obligations": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Consulter finance/obligations",
+                "operationId": "getFinanceObligations",
+                "parameters": [
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "campaign_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Finance"
@@ -5388,6 +5918,10 @@
                                         "type": "string",
                                         "format": "uuid"
                                     },
+                                    "campaign_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
                                     "type": {
                                         "type": "string",
                                         "example": null
@@ -5399,6 +5933,10 @@
                                     "currency": {
                                         "type": "string",
                                         "example": null
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date"
                                     },
                                     "items": {
                                         "type": "array",
@@ -5476,6 +6014,373 @@
                                     "obligation_id",
                                     "amount",
                                     "method"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/finance/refunds": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Consulter finance/refunds",
+                "operationId": "getFinanceRefunds",
+                "parameters": [
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/reports/export": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Consulter finance/reports/export",
+                "operationId": "getFinanceReportsExport",
+                "parameters": [
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "campaign_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/transactions": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Consulter finance/transactions",
+                "operationId": "getFinanceTransactions",
+                "parameters": [
+                    {
+                        "name": "institution_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "university_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "campaign_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": null
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/transactions/{transaction}/allocations": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Créer ou déclencher finance/transactions/transaction/allocations",
+                "operationId": "postFinanceTransactionsTransactionAllocations",
+                "parameters": [
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "obligation_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "amount": {
+                                        "type": "number"
+                                    }
+                                },
+                                "required": [
+                                    "obligation_id",
+                                    "amount"
                                 ]
                             }
                         }
@@ -5599,6 +6504,55 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/finance/transactions/{transaction}/verify": {
+            "patch": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Mettre à jour finance/transactions/transaction/verify",
+                "operationId": "patchFinanceTransactionsTransactionVerify",
+                "parameters": [
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifiant public UUID.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/institutions": {
@@ -9647,6 +10601,27 @@
                     "duration_days": {
                         "type": "integer",
                         "minimum": 1
+                    }
+                }
+            },
+            "FinancialObligationItem": {
+                "type": "object",
+                "required": [
+                    "label",
+                    "quantity",
+                    "unit_amount"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "minimum": 0.01
+                    },
+                    "unit_amount": {
+                        "type": "number",
+                        "minimum": 0
                     }
                 }
             },

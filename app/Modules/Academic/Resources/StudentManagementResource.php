@@ -13,6 +13,7 @@ class StudentManagementResource extends JsonResource
         $metadata = $this->metadata ?? [];
         return [
             'id' => $this->public_id, 'university_id' => $this->university?->public_id,
+            'university' => $this->whenLoaded('university', fn () => $this->university ? ['id' => $this->university->public_id, 'name' => $this->university->name, 'short_name' => $this->university->short_name] : null),
             'student_number' => $this->student_number, 'national_reference' => $this->national_reference,
             'last_name' => $this->last_name ?? ($metadata['last_name'] ?? null), 'middle_name' => $this->middle_name ?? ($metadata['middle_name'] ?? null),
             'first_name' => $this->first_name ?? ($metadata['first_name'] ?? null),

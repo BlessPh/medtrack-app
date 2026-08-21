@@ -49,6 +49,11 @@ class Student extends Model
         return $this->hasMany(AttendanceRecord::class);
     }
 
+    public function admissions(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Admission\Models\Admission::class);
+    }
+
     public function resolveRouteBinding($value, $field = null): ?self
     {
         return $this->where($field ?? 'public_id', $value)->first();

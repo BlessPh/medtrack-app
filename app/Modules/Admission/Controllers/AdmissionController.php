@@ -19,6 +19,23 @@ use Illuminate\Validation\Rule;
 
 class AdmissionController
 {
+    /** Admissions confirmées, toutes stratégies confondues, disponibles pour créer un stage. */
+    public function hospitalAdmissions(Request $request, InstitutionAccess $access): JsonResponse
+    {
+        $data = $request->validate(['hospital_id' => ['required', 'uuid']]);
+        $hospital = Institution::where('public_id', $data['hospital_id'])->where('type', 'HOSPITAL')->firstOrFail();
+        abort_unless($access->has($request->user(), $hospital->id, [InstitutionRole::HospitalManager->value]), 403);
+
+        $admissions = \App\Modules\Admission\Models\Admission::query()
+            ->where('hospital_id', $hospital->id)
+            ->where('status', 'ACCEPTED')
+            ->with(['student.user.profile', 'student.university', 'application.campaign.academicYear', 'internship'])
+            ->latest('admitted_at')
+            ->get();
+
+        return response()->json(['data' => $admissions]);
+    }
+
     public function hospitalApplications(Request $request, InstitutionAccess $access): JsonResponse
     {
         $data = $request->validate(['hospital_id' => ['required', 'uuid'], 'status' => ['nullable', 'string']]);

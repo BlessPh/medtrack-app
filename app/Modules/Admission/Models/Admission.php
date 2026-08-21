@@ -6,6 +6,7 @@ use App\Modules\Academic\Models\Student;
 use App\Shared\Models\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Admission extends Model
 {
@@ -26,5 +27,10 @@ class Admission extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function internship(): HasOne
+    {
+        return $this->hasOne(\App\Modules\Internship\Models\Internship::class);
     }
 }
